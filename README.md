@@ -1,0 +1,2 @@
+strider-extension-loader
+========================
