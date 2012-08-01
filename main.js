@@ -19,6 +19,7 @@ var fs = require('fs'),
 //
 function findExtensions(dir, cb) {
 
+  // XXX May not be sane default when installed globally
   var dir = dir || path.join(process.cwd(), "node_modules");
 
   var filename = "strider.json";
@@ -27,12 +28,14 @@ function findExtensions(dir, cb) {
 
   Step(
     function() {
+      // find top-level module dirs
         fs.readdir(dir, this);
     },
     function(err, entries) {
       if (err) {
         throw err;
       }
+      // Stat extension files in parallel
       var group = this.group();
       entries.forEach(function(module) {
         var p = path.join(dir, module, filename);
@@ -48,6 +51,7 @@ function findExtensions(dir, cb) {
         if (!r.stat) {
           return;
         }
+        // Ensure they are of type file not something else
         if (r.stat.isFile()) {
           extensions.push(r.path);
         }
@@ -77,14 +81,18 @@ function loadExtension(filename, cb) {
       if (err) {
         return cb(err, null);
       }
+      // Parse extension JSON
       try {
         var extensionConfig = JSON.parse(data);
       } catch(e) {
         return cb(e, null);
       }
+      // Build require'able path to extension sources
       var extension = {
-        webapp: require(filename.replace('strider.json', extensionConfig.webapp)),
-        worker: require(filename.replace('strider.json', extensionConfig.worker)),
+        webapp: require(filename.replace('strider.json',
+            extensionConfig.webapp)),
+        worker: require(filename.replace('strider.json',
+            extensionConfig.worker)),
       };
 
       cb(null, extension);
@@ -92,6 +100,7 @@ function loadExtension(filename, cb) {
   );
 }
 
+// Exported functions
 module.exports = {
   findExtensions: findExtensions,
   loadExtension: loadExtension
