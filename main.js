@@ -92,10 +92,10 @@ function loadExtension(moduleDir, cb) {
       }
       // Build require'able path to extension sources
       var extension = {
-        webapp: require("./" + path.join(moduleDir,
-            extensionConfig.webapp)),
-        worker: require("./" + path.join(moduleDir,
-            extensionConfig.worker)),
+        webapp: require(path.resolve(path.join(moduleDir,
+            extensionConfig.webapp))),
+        worker: require(path.resolve(path.join(moduleDir,
+            extensionConfig.worker))),
         package: packageConfig
       };
 
