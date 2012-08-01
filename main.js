@@ -104,17 +104,6 @@ function loadExtension(moduleDir, cb) {
   );
 }
 
-//
-//### Initialise a Strider extension
-// **extension** is an extension object loaded via loadExtension()
-//
-// **cb** is a callback executed when the extension is loaded, which
-// has signature
-//
-function initExtension(extension, config, cb) {
-
-}
-
 // Exported functions
 module.exports = {
   findExtensions: findExtensions,
