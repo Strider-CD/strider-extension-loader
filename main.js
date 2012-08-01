@@ -64,35 +64,39 @@ function findExtensions(dir, cb) {
 //
 //### Load a Strider extension
 //
-// **filename** is a filesystem location to a strider.json file. Extension is
-// assumed to be contained in same directory as strider.json.
+// **moduleDir* is a directory containing a strider.json file and a package.json file.
 //
 // **cb** is a function of signature function(err, extension) where extension
 // is an extension object on success and err is an error on failure.
 //
 // Note that this function does not initialize the extension.
 // 
-function loadExtension(filename, cb) {
+function loadExtension(moduleDir, cb) {
   Step(
     function() {
-      fs.readFile(filename, this);
+      var striderFile = path.join(moduleDir, "strider.json");
+      var packageFile = path.join(moduleDir, "package.json");
+      fs.readFile(striderFile, this.parallel());
+      fs.readFile(packageFile, this.parallel());
     },
-    function(err, data) {
+    function(err, striderData, packageData) {
       if (err) {
         return cb(err, null);
       }
       // Parse extension JSON
       try {
-        var extensionConfig = JSON.parse(data);
+        var extensionConfig = JSON.parse(striderData);
+        var packageConfig = JSON.parse(packageData);
       } catch(e) {
         return cb(e, null);
       }
       // Build require'able path to extension sources
       var extension = {
-        webapp: require(filename.replace('strider.json',
+        webapp: require("./" + path.join(moduleDir,
             extensionConfig.webapp)),
-        worker: require(filename.replace('strider.json',
+        worker: require("./" + path.join(moduleDir,
             extensionConfig.worker)),
+        package: packageConfig
       };
 
       cb(null, extension);
@@ -100,8 +104,19 @@ function loadExtension(filename, cb) {
   );
 }
 
+//
+//### Initialise a Strider extension
+// **extension** is an extension object loaded via loadExtension()
+//
+// **cb** is a callback executed when the extension is loaded, which
+// has signature
+//
+function initExtension(extension, config, cb) {
+
+}
+
 // Exported functions
 module.exports = {
   findExtensions: findExtensions,
-  loadExtension: loadExtension
+  loadExtension: loadExtension,
 };

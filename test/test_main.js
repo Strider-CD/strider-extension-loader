@@ -86,6 +86,7 @@ describe("#loadExtension", function() {
     fs.writeFileSync("./node_modules_ext/foobar-strider/webapp.js", "exports.ok = function() { return true; };\n");
     fs.writeFileSync("./node_modules_ext/foobar-strider/worker.js", "exports.ok = function() { return true; };\n");
     fs.writeFileSync("./node_modules_ext/foobar-strider/strider.json", JSON.stringify(strider_json));
+    fs.writeFileSync("./node_modules_ext/foobar-strider/package.json", fs.readFileSync("package.json"));
 
 
   });
@@ -101,7 +102,7 @@ describe("#loadExtension", function() {
   });
 
   it("should fail on invalid JSON", function(done) {
-    loader.loadExtension("./node_modules_ext/foobar/strider.json", function(err, extension) {
+    loader.loadExtension("./node_modules_ext/foobar/", function(err, extension) {
       expect(err).to.exist;
       expect(extension).to.be.null;
       done();
@@ -109,11 +110,12 @@ describe("#loadExtension", function() {
   });
 
   it("should correctly load extension", function(done) {
-    loader.loadExtension("./node_modules_ext/foobar-strider/strider.json", function(err, extension) {
+    loader.loadExtension("./node_modules_ext/foobar-strider/", function(err, extension) {
       expect(err).not.to.exist;
       expect(extension).to.exist;
       expect(extension.webapp.ok()).to.be.true;
       expect(extension.worker.ok()).to.be.true;
+      expect(extension.package.name).to.eql("strider-extension-loader");
       done();
     });
   });
@@ -122,7 +124,6 @@ describe("#loadExtension", function() {
     exec("rm -rf node_modules_ext", function() {
       done();
     });
-
   });
 
 });
