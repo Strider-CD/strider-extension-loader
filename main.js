@@ -56,7 +56,7 @@ function findExtensions(dir, cb) {
           extensions.push(r.path);
         }
       });
-      cb(err, extensions);
+      cb(null, extensions);
     }
   );
 }
