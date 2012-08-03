@@ -86,14 +86,18 @@ function loadExtension(moduleDir, cb) {
       } catch(e) {
         return cb(e, null);
       }
-      // Build require'able path to extension sources
       var extension = {
-        webapp: require(path.resolve(path.join(moduleDir,
-            extensionConfig.webapp))),
-        worker: require(path.resolve(path.join(moduleDir,
-            extensionConfig.worker))),
         package: packageConfig
       };
+      if (extensionConfig.webapp) {
+        var webapp = extensionConfig.webapp;
+        extension.webapp = require(path.resolve(path.join(moduleDir, webapp)));
+      }
+      if (extensionConfig.worker) {
+        var worker = extensionConfig.worker;
+        extension.worker = require(path.resolve(path.join(moduleDir, worker)));
+      }
+      // Build require'able path to extension sources
 
       cb(null, extension);
     }
