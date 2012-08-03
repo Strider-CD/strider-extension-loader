@@ -10,17 +10,13 @@ var fs = require('fs'),
 //
 // ### Locate Strider Extensions
 //
-// Under a specified path **dir** [by default, process.cwd()/node_modules] look
-// for directories containing file 'strider.json'.  These are considered
-// Strider modules.
+// Under a specified path **dir** look for directories containing file
+// 'strider.json'.  These are considered Strider modules.
 //
 // **cb** is a function of signature cb(err, extensions) where extensions is an
 // array of filesystems path on success and err is an error on failure.
 //
 function findExtensions(dir, cb) {
-
-  // XXX May not be sane default when installed globally
-  var dir = dir || path.join(process.cwd(), "node_modules");
 
   var filename = "strider.json";
 
