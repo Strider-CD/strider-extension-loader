@@ -38,7 +38,7 @@ function findExtensions(dir, cb) {
         var cb = group();
         fs.stat(p, function(err, stat) {
           cb(err,
-            {stat:stat, path:p});
+            {stat:stat, path:path.join(dir, module)});
         });
       });
     },

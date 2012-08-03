@@ -59,7 +59,7 @@ describe("#findExtensions", function() {
   it("should find an extension when there is one", function(done) {
     loader.findExtensions('./node_modules_ext', function(err, extensions) {
       expect(extensions).to.have.length(1);
-      expect(extensions).to.contain('node_modules_ext/foobar-strider/strider.json');
+      expect(extensions).to.contain('node_modules_ext/foobar-strider');
       done();
     });
   });
