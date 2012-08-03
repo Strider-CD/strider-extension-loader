@@ -97,7 +97,6 @@ function loadExtension(moduleDir, cb) {
         var worker = extensionConfig.worker;
         extension.worker = require(path.resolve(path.join(moduleDir, worker)));
       }
-      // Build require'able path to extension sources
 
       cb(null, extension);
     }
