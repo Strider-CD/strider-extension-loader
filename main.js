@@ -97,14 +97,106 @@ function loadExtension(moduleDir, cb) {
         var worker = extensionConfig.worker;
         extension.worker = require(path.resolve(path.join(moduleDir, worker)));
       }
-
       cb(null, extension);
     }
   );
 }
 
+//
+// ### Initialize Strider Extensions
+//
+// Find, load and initialize extenions of type ***type*** under extension
+// directory ***extdir*** ***type*** may be one of "webapp" or "worker".
+//
+// Context should be a Strider context object with keys:
+//  - config (strider config object)
+//  - emitter (global eventemitter)
+//  - extensionRoutes (list of webapp routes)
+//  - registerTransportMiddleware (function)
+//
+// ***appInstance*** should be an ExpressJS app instance, and is only needed
+// for webapp extensions. Can be left null/undefined for worker extensions.
+//
+// ***cb*** is a callback to be executed when all modules are initialized.
+//
+function initExtensions(extdir, type, context, appInstance, cb) {
+  Step(
+    function() {
+      console.log("Looking for extensions under %s", extdir);
+      findExtensions(extdir, this);
+    },
+    function(err, extensions) {
+      console.log("%d extensions found", extensions.length);
+      var group = this.group();
+      extensions.forEach(function(ext) {
+        console.log("Loading extension %s", ext);
+        var cb = group();
+        loadExtension(ext, function(err, res) {
+          cb(err, {ext:res, dir:ext});
+        });
+      });
+    },
+    function(err, loaded) {
+      if (err) {
+        console.error("Error loading extension: %s", err);
+        process.exit(1);
+      }
+      console.log("%d extensions loaded", loaded.length);
+      // now to initialize
+      var self = this;
+      loaded.forEach(function(l) {
+        if (l.ext === null || !l.ext[type]) {
+          console.log("Extension in %s has no valid `%s` entrypoints", l.dir, type);
+          return;
+        }
+        // Keep track of which extensions are using which routes.
+        // Put this here to allow use of a closure over path and extension.
+        if (type === 'webapp') {
+          context.route = {
+            get:function(p, f) {
+              context.extensionRoutes.push(
+                {method:"get", path:p, extension:l.dir});
+              appInstance.get(p, f);
+            },
+            post:function(p, f) {
+              context.extensionRoutes.push(
+                {method:"post", path:p, extension:l.dir});
+              appInstance.post(p, f);
+            },
+            delete:function(p, f) {
+              context.extensionRoutes.push(
+                {method:"delete", path:p, extension:l.dir});
+              appInstance.delete(p, f);
+            },
+            put:function(p, f) {
+              context.extensionRoutes.push(
+                {method:"put", path:p, extension:l.dir});
+              appInstance.put(p, f);
+            }
+          };
+        }
+        if (type === 'worker' && typeof(l.ext.worker) === 'function') {
+          l.ext.worker(context, self.parallel());
+        }
+        if (type === 'webapp' && typeof(l.ext.webapp) === 'function') {
+          l.ext.webapp(context, self.parallel());
+        }
+      });
+    },
+    function(err, initialized) {
+      if (err) {
+        console.log("Error loading extensions: %s", err);
+        process.exit(1);
+      }
+      cb(null, initialized);
+    }
+  );
+}
+
+
 // Exported functions
 module.exports = {
   findExtensions: findExtensions,
+  initExtensions: initExtensions,
   loadExtension: loadExtension,
 };

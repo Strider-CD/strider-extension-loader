@@ -1,4 +1,5 @@
-var exec = require('child_process').exec,
+var EventEmitter = require('events').EventEmitter,
+    exec = require('child_process').exec,
     expect = require('chai').expect,
     fs = require('fs'),
     loader = require('../main'),
@@ -160,6 +161,86 @@ describe("#loadExtension", function() {
 
   after(function(done) {
     exec("rm -rf node_modules_ext", function() {
+      done();
+    });
+  });
+
+});
+
+describe("#initExtensions", function() {
+  before(function() {
+    mkpath("./node_modules_ext2/foobar-strider");
+    mkpath("./node_modules_ext2/foobar-strider-worker");
+    mkpath("./node_modules_ext2/foobar-strider-webapp");
+    var strider_json = {
+      webapp: "webapp.js",
+      worker: "worker.js"
+    };
+    fs.writeFileSync("./node_modules_ext2/foobar-strider/webapp.js",
+        "module.exports = function(ctx, cb) { ctx.registerTransportMiddleware(true); cb(null, null); };\n");
+    fs.writeFileSync("./node_modules_ext2/foobar-strider/worker.js",
+        "module.exports = function(ctx, cb) { ctx.registerTransportMiddleware(true); cb(null, null); };\n");
+    fs.writeFileSync("./node_modules_ext2/foobar-strider/strider.json", JSON.stringify(strider_json));
+    fs.writeFileSync("./node_modules_ext2/foobar-strider/package.json", fs.readFileSync("package.json"));
+    var strider_json = {
+      webapp: "webapp.js",
+    };
+    fs.writeFileSync("./node_modules_ext2/foobar-strider-webapp/webapp.js",
+        "module.exports = function(ctx, cb) { ctx.registerTransportMiddleware(true); cb(null, null); };\n");
+    fs.writeFileSync("./node_modules_ext2/foobar-strider-webapp/strider.json", JSON.stringify(strider_json));
+    fs.writeFileSync("./node_modules_ext2/foobar-strider-webapp/package.json", fs.readFileSync("package.json"));
+
+    var strider_json = {
+      worker: "worker.js",
+    };
+    fs.writeFileSync("./node_modules_ext2/foobar-strider-worker/worker.js",
+        "module.exports = function(ctx, cb) { ctx.registerTransportMiddleware(true); cb(null, null); };\n");
+    fs.writeFileSync("./node_modules_ext2/foobar-strider-worker/strider.json", JSON.stringify(strider_json));
+    fs.writeFileSync("./node_modules_ext2/foobar-strider-worker/package.json", fs.readFileSync("package.json"));
+
+  });
+
+  it("should initialize worker extensions", function(done) {
+    var emitter = new EventEmitter();
+    var config = {};
+    var l = [];
+    function registerTransportMiddleware(m) {
+      l.push(m);
+    }
+    var context = {
+      config: config,
+      emitter: emitter,
+      extensionRoutes: [],
+      registerTransportMiddleware: registerTransportMiddleware
+    };
+    loader.initExtensions("./node_modules_ext2", "worker", context, null, function(err, initialized) {
+      expect(l).to.have.length(2);
+      done();
+    });
+  });
+
+  it("should initialize webapp extensions", function(done) {
+    var emitter = new EventEmitter();
+    var config = {};
+    var appInstance = {};
+    var l = [];
+    function registerTransportMiddleware(m) {
+      l.push(m);
+    }
+    var context = {
+      config: config,
+      emitter: emitter,
+      extensionRoutes: [],
+      registerTransportMiddleware: registerTransportMiddleware
+    };
+    loader.initExtensions("./node_modules_ext2", "webapp", context, null, function(err, initialized) {
+      expect(l).to.have.length(2);
+      done();
+    });
+  });
+
+  after(function(done) {
+    exec("rm -rf node_modules_ext2", function() {
       done();
     });
   });
