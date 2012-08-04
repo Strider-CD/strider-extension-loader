@@ -222,7 +222,12 @@ describe("#initExtensions", function() {
   it("should initialize webapp extensions", function(done) {
     var emitter = new EventEmitter();
     var config = {};
-    var appInstance = {};
+    var urlpaths = [];
+    var appInstance = {
+      use: function(path) {
+        urlpaths.push(path);
+      }
+    };
     var l = [];
     function registerTransportMiddleware(m) {
       l.push(m);
@@ -233,8 +238,11 @@ describe("#initExtensions", function() {
       extensionRoutes: [],
       registerTransportMiddleware: registerTransportMiddleware
     };
-    loader.initExtensions("./node_modules_ext2", "webapp", context, null, function(err, initialized) {
+    loader.initExtensions("./node_modules_ext2", "webapp", context, appInstance, function(err, initialized) {
       expect(l).to.have.length(2);
+      // Verify the static paths are mapped for the two webapp extensions
+      expect(urlpaths).to.contain("/ext/foobar-strider");
+      expect(urlpaths).to.contain("/ext/foobar-strider-webapp");
       done();
     });
   });

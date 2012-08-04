@@ -2,7 +2,8 @@
 // Loader for Strider extension modules.
 //
 
-var fs = require('fs'),
+var connect = require('connect'),
+    fs = require('fs'),
     path = require('path'),
     Step = require('step');
 
@@ -174,6 +175,10 @@ function initExtensions(extdir, type, context, appInstance, cb) {
               appInstance.put(p, f);
             }
           };
+          // Add a static fileserver mounted at /ext/$module/ which maps to
+          // moduledir/static
+          appInstance.use('/ext/' + path.basename(l.dir),
+              connect.static(path.join(l.dir), "static"));
         }
         if (type === 'worker' && typeof(l.ext.worker) === 'function') {
           l.ext.worker(context, self.parallel());
