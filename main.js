@@ -153,6 +153,7 @@ function initExtensions(extdir, type, context, appInstance, cb) {
         // Keep track of which extensions are using which routes.
         // Put this here to allow use of a closure over path and extension.
         if (type === 'webapp') {
+          // Extensions should use context.route.<method>() to add routes
           context.route = {
             get:function(p, f) {
               context.extensionRoutes.push(
