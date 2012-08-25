@@ -44,6 +44,9 @@ function findExtensions(dir, cb) {
       });
     },
     function(err, results) {
+      if (!results)
+        results = [];
+
       results.forEach(function(r) {
         if (!r.stat) {
           return;
@@ -188,6 +191,10 @@ function initExtensions(extdir, type, context, appInstance, cb) {
           l.ext.webapp(context, self.parallel());
         }
       });
+      if (loaded.length === 0) {
+        // Bit odd, but necessary.
+        this(null, []);
+      }
     },
     function(err, initialized) {
       if (err) {

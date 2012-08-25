@@ -247,6 +247,24 @@ describe("#initExtensions", function() {
     });
   });
 
+  it("should continue without extensions", function(done) {
+    var emitter = new EventEmitter();
+    var config = {};
+    var appInstance = {
+      use: function() { }
+    };
+    var context = {
+      config: config,
+      emitter: emitter,
+      extensionRoutes: [],
+    };
+    loader.initExtensions("/tmp/nonexistant", "webapp", context, appInstance, function(err, initialized) {
+      expect(initialized).to.have.length(0);
+      expect(err).to.eql(null);
+      done();
+    });
+  });
+
   after(function(done) {
     exec("rm -rf node_modules_ext2", function() {
       done();
