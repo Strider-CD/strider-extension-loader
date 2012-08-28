@@ -143,11 +143,13 @@ function initExtensions(extdir, type, context, appInstance, cb) {
         console.error("Error loading extension: %s", err);
         process.exit(1);
       }
+      var initCount = 0;
       // now to initialize
       var self = this;
-      loaded.forEach(function(l) {
+      for (var i=0; i < loaded.length; i++) {
+        var l = loaded[i];
         if (l.ext === null || !l.ext[type]) {
-          return;
+          continue;
         }
         // Keep track of which extensions are using which routes.
         // Put this here to allow use of a closure over path and extension.
@@ -182,12 +184,14 @@ function initExtensions(extdir, type, context, appInstance, cb) {
         }
         if (type === 'worker' && typeof(l.ext.worker) === 'function') {
           l.ext.worker(context, self.parallel());
+          initCount++;
         }
         if (type === 'webapp' && typeof(l.ext.webapp) === 'function') {
           l.ext.webapp(context, self.parallel());
+          initCount++;
         }
-      });
-      if (loaded.length === 0) {
+      }
+      if (initCount === 0) {
         // Bit odd, but necessary.
         this(null, []);
       }
