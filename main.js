@@ -126,14 +126,12 @@ function loadExtension(moduleDir, cb) {
 function initExtensions(extdir, type, context, appInstance, cb) {
   Step(
     function() {
-      console.log("Looking for extensions under %s", extdir);
+      console.log("Looking for %s-type extensions under %s", type, extdir);
       findExtensions(extdir, this);
     },
     function(err, extensions) {
-      console.log("%d extensions found", extensions.length);
       var group = this.group();
       extensions.forEach(function(ext) {
-        console.log("Loading extension %s", ext);
         var cb = group();
         loadExtension(ext, function(err, res) {
           cb(err, {ext:res, dir:ext});
@@ -145,12 +143,10 @@ function initExtensions(extdir, type, context, appInstance, cb) {
         console.error("Error loading extension: %s", err);
         process.exit(1);
       }
-      console.log("%d extensions loaded", loaded.length);
       // now to initialize
       var self = this;
       loaded.forEach(function(l) {
         if (l.ext === null || !l.ext[type]) {
-          console.log("Extension in %s has no valid `%s` entrypoints", l.dir, type);
           return;
         }
         // Keep track of which extensions are using which routes.
