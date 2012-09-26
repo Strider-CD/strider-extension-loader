@@ -172,6 +172,7 @@ describe("#initExtensions", function() {
     mkpath("./node_modules_ext2/foobar-strider");
     mkpath("./node_modules_ext2/foobar-strider-worker");
     mkpath("./node_modules_ext2/foobar-strider-webapp");
+    mkpath("./node_modules_ext2/foobar-strider-webapp-routes");
     var strider_json = {
       webapp: "webapp.js",
       worker: "worker.js"
@@ -197,6 +198,14 @@ describe("#initExtensions", function() {
         "module.exports = function(ctx, cb) { ctx.registerTransportMiddleware(true); cb(null, null); };\n");
     fs.writeFileSync("./node_modules_ext2/foobar-strider-worker/strider.json", JSON.stringify(strider_json));
     fs.writeFileSync("./node_modules_ext2/foobar-strider-worker/package.json", fs.readFileSync("package.json"));
+
+    var strider_json = {
+      webapp: "webapp.js",
+    };
+    fs.writeFileSync("./node_modules_ext2/foobar-strider-webapp-routes/webapp.js",
+    "module.exports = function(ctx, cb) { ctx.registerTransportMiddleware(true); ctx.route.get('/foo', function(req, res) { res.end('ok') }); cb(null, null); };\n");
+    fs.writeFileSync("./node_modules_ext2/foobar-strider-webapp-routes/strider.json", JSON.stringify(strider_json));
+    fs.writeFileSync("./node_modules_ext2/foobar-strider-webapp-routes/package.json", fs.readFileSync("package.json"));
 
   });
 
@@ -226,7 +235,11 @@ describe("#initExtensions", function() {
     var appInstance = {
       use: function(path) {
         urlpaths.push(path);
-      }
+      },
+      get: function(p, f) {},
+      post: function(p, f) {},
+      delete: function(p, f) {},
+      put: function(p, f) {},
     };
     var l = [];
     function registerTransportMiddleware(m) {
@@ -239,7 +252,7 @@ describe("#initExtensions", function() {
       registerTransportMiddleware: registerTransportMiddleware
     };
     loader.initExtensions("./node_modules_ext2", "webapp", context, appInstance, function(err, initialized) {
-      expect(l).to.have.length(2);
+      expect(l).to.have.length(3);
       // Verify the static paths are mapped for the two webapp extensions
       expect(urlpaths).to.contain("/ext/foobar-strider");
       expect(urlpaths).to.contain("/ext/foobar-strider-webapp");
@@ -251,7 +264,11 @@ describe("#initExtensions", function() {
     var emitter = new EventEmitter();
     var config = {};
     var appInstance = {
-      use: function() { }
+      use: function() { },
+      get: function(p, f) {},
+      post: function(p, f) {},
+      delete: function(p, f) {},
+      put: function(p, f) {},
     };
     var context = {
       config: config,
@@ -261,6 +278,38 @@ describe("#initExtensions", function() {
     loader.initExtensions("/tmp/nonexistant", "webapp", context, appInstance, function(err, initialized) {
       expect(initialized).to.have.length(0);
       expect(err).to.eql(null);
+      done();
+    });
+  });
+
+  it("should initialize webapp extensions routes", function(done) {
+    var emitter = new EventEmitter();
+    var config = {};
+    var urlpaths = [];
+    var appInstance = {
+      use: function(path) {
+        urlpaths.push(path);
+      },
+      get: function(p, f) {},
+      post: function(p, f) {},
+      delete: function(p, f) {},
+      put: function(p, f) {},
+    };
+    var l = [];
+    function registerTransportMiddleware(m) {
+      l.push(m);
+    }
+    var context = {
+      config: config,
+      emitter: emitter,
+      extensionRoutes: [],
+      registerTransportMiddleware: registerTransportMiddleware
+    };
+    loader.initExtensions("./node_modules_ext2", "webapp", context, appInstance, function(err, initialized) {
+      expect(l).to.have.length(3);
+      expect(context.extensionRoutes).to.have.length(1);
+      expect(context.extensionRoutes[0].path).to.eql('/foo');
+      expect(context.extensionRoutes[0].method).to.eql('get');
       done();
     });
   });

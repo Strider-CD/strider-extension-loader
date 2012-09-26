@@ -159,22 +159,22 @@ function initExtensions(extdir, type, context, appInstance, cb) {
             get:function(p, f) {
               context.extensionRoutes.push(
                 {method:"get", path:p, extension:l.dir});
-              appInstance.get(p, f);
+              appInstance.get.call(arguments);
             },
             post:function(p, f) {
               context.extensionRoutes.push(
                 {method:"post", path:p, extension:l.dir});
-              appInstance.post(p, f);
+              appInstance.post.call(arguments);
             },
             delete:function(p, f) {
               context.extensionRoutes.push(
                 {method:"delete", path:p, extension:l.dir});
-              appInstance.delete(p, f);
+              appInstance.delete.call(arguments);
             },
             put:function(p, f) {
               context.extensionRoutes.push(
                 {method:"put", path:p, extension:l.dir});
-              appInstance.put(p, f);
+              appInstance.put.call(arguments);
             }
           };
           // Add a static fileserver mounted at /ext/$module/ which maps to
