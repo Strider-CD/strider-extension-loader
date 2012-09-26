@@ -157,24 +157,25 @@ function initExtensions(extdir, type, context, appInstance, cb) {
           // Extensions should use context.route.<method>() to add routes
           context.route = {
             get:function(p, f) {
+              console.log("GET");
               context.extensionRoutes.push(
                 {method:"get", path:p, extension:l.dir});
-              appInstance.get.call(arguments);
+              appInstance.get.apply(appInstance, arguments);
             },
             post:function(p, f) {
               context.extensionRoutes.push(
                 {method:"post", path:p, extension:l.dir});
-              appInstance.post.call(arguments);
+              appInstance.post.apply(appInstance, arguments);
             },
             delete:function(p, f) {
               context.extensionRoutes.push(
                 {method:"delete", path:p, extension:l.dir});
-              appInstance.delete.call(arguments);
+              appInstance.delete.apply(appInstance, arguments);
             },
             put:function(p, f) {
               context.extensionRoutes.push(
                 {method:"put", path:p, extension:l.dir});
-              appInstance.put.call(arguments);
+              appInstance.put.apply(appInstance, arguments);
             }
           };
           // Add a static fileserver mounted at /ext/$module/ which maps to
