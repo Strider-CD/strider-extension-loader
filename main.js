@@ -157,7 +157,6 @@ function initExtensions(extdir, type, context, appInstance, cb) {
           // Extensions should use context.route.<method>() to add routes
           context.route = {
             get:function(p, f) {
-              console.log("GET");
               context.extensionRoutes.push(
                 {method:"get", path:p, extension:l.dir});
               appInstance.get.apply(appInstance, arguments);
