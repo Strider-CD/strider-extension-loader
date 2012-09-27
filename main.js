@@ -180,7 +180,7 @@ function initExtensions(extdir, type, context, appInstance, cb) {
           // Add a static fileserver mounted at /ext/$module/ which maps to
           // moduledir/static
           appInstance.use('/ext/' + path.basename(l.dir),
-              connect.static(path.join(l.dir), "static"));
+              connect.static(path.join(l.dir, "static")));
         }
         if (type === 'worker' && typeof(l.ext.worker) === 'function') {
           l.ext.worker(context, self.parallel());
