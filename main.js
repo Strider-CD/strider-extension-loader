@@ -101,6 +101,11 @@ function loadExtension(moduleDir, cb) {
         var worker = extensionConfig.worker;
         extension.worker = require(path.resolve(path.join(moduleDir, worker)));
       }
+      extension.weight = -1;
+      // For sorting
+      if (extensionConfig.weight) {
+        extension.weight = extensionConfig.weight
+      }
       cb(null, extension);
     }
   );
@@ -146,6 +151,8 @@ function initExtensions(extdir, type, context, appInstance, cb) {
       var initCount = 0;
       // now to initialize
       var self = this;
+      // Sort by weight
+      loaded = loaded.sort(function (a, b) { return a.ext.weight - b.ext.weight; });
       for (var i=0; i < loaded.length; i++) {
         var l = loaded[i];
         if (l.ext === null || !l.ext[type]) {

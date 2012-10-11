@@ -186,6 +186,7 @@ describe("#initExtensions", function() {
     var strider_json = {
       webapp: "webapp.js",
     };
+    strider_json.weight = 10;
     fs.writeFileSync("./node_modules_ext2/foobar-strider-webapp/webapp.js",
         "module.exports = function(ctx, cb) { ctx.registerTransportMiddleware(true); cb(null, null); };\n");
     fs.writeFileSync("./node_modules_ext2/foobar-strider-webapp/strider.json", JSON.stringify(strider_json));
@@ -310,6 +311,40 @@ describe("#initExtensions", function() {
       expect(context.extensionRoutes).to.have.length(1);
       expect(context.extensionRoutes[0].path).to.eql('/foo');
       expect(context.extensionRoutes[0].method).to.eql('get');
+      done();
+    });
+  });
+
+  it("should initialize extensions in order of weight", function(done) {
+    var emitter = new EventEmitter();
+    var config = {};
+    var urlpaths = [];
+    var appInstance = {
+      use: function(path) {
+        urlpaths.push(path);
+      },
+      get: function(p, f) {},
+      post: function(p, f) {},
+      delete: function(p, f) {},
+      put: function(p, f) {},
+    };
+    var l = [];
+    function registerTransportMiddleware(m) {
+      l.push(m);
+    }
+    var context = {
+      config: config,
+      emitter: emitter,
+      extensionRoutes: [],
+      registerTransportMiddleware: registerTransportMiddleware
+    };
+    loader.initExtensions("./node_modules_ext2", "webapp", context, appInstance, function(err, initialized) {
+      expect(l).to.have.length(3);
+      // Verify the static paths are mapped for the two webapp extensions
+      expect(urlpaths).to.contain("/ext/foobar-strider");
+      expect(urlpaths).to.contain("/ext/foobar-strider-webapp");
+      // Verify order
+      expect(urlpaths[1]).to.eql("/ext/foobar-strider-webapp-routes");
       done();
     });
   });
