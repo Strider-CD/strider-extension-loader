@@ -80,6 +80,7 @@ function loadExtension(moduleDir, cb) {
       fs.readFile(packageFile, this.parallel());
     },
     function(err, striderData, packageData) {
+      console.log("Loading module: ", moduleDir);
       if (err) {
         return cb(err, null);
       }
@@ -106,6 +107,10 @@ function loadExtension(moduleDir, cb) {
       if (extensionConfig.weight) {
         extension.weight = extensionConfig.weight
       }
+      if (extensionConfig.templates){
+        console.log("---> Loading Plugin Templates")
+        extension.templates = extensionConfig.templates;
+      }
       cb(null, extension);
     }
   );
@@ -129,6 +134,8 @@ function loadExtension(moduleDir, cb) {
 // ***cb*** is a callback to be executed when all modules are initialized.
 //
 function initExtensions(extdir, type, context, appInstance, cb) {
+  var  templates = {}
+
   Step(
     function() {
       console.log("Looking for %s-type extensions under %s", type, extdir);
@@ -148,14 +155,15 @@ function initExtensions(extdir, type, context, appInstance, cb) {
         console.error("Error loading extension: %s", err);
         process.exit(1);
       }
-      var initCount = 0;
+      var initCount = 0
+
       // now to initialize
       var self = this;
       // Sort by weight
       loaded = loaded.sort(function (a, b) { return a.ext.weight - b.ext.weight; });
       for (var i=0; i < loaded.length; i++) {
         var l = loaded[i];
-        if (l.ext === null || !l.ext[type]) {
+        if (l.ext === null) {
           continue;
         }
         // Keep track of which extensions are using which routes.
@@ -197,6 +205,11 @@ function initExtensions(extdir, type, context, appInstance, cb) {
           l.ext.webapp(context, self.parallel());
           initCount++;
         }
+        if (l.ext.templates){
+          for (var k in l.ext.templates){
+            templates[k] = l.ext.templates[k]
+          }
+        }
       }
       if (initCount === 0) {
         // Bit odd, but necessary.
@@ -208,7 +221,7 @@ function initExtensions(extdir, type, context, appInstance, cb) {
         console.log("Error loading extensions: %s", err);
         process.exit(1);
       }
-      cb(null, initialized);
+      cb(null, initialized, templates);
     }
   );
 }
