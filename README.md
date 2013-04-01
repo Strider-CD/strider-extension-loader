@@ -79,15 +79,12 @@ module.exports = function(ctx, cb) {
   //  specific points in existing pages. Any element with a class
   // with the 'StriderBlock_' prefix can be specified here:
 
-  ctx.registerBlock('HeaderBrand', function(context, cb){
+  ctx.registerBlock('HeaderBrand', function(context){
     // context has a lot of useful stuff on it:
 
     var email = context.currentUser.user.email
 
-    // You can do async operations etc. in here, but the page won't
-    // be served until you call the cb. The callback takes rendered
-    // html string:
-    cb(null, "<h1>FooStrider</h1>"); //(first argument is an error)
+    return "<h1>FooStrider</h1>");
   })
 
 
