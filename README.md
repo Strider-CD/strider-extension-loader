@@ -125,15 +125,9 @@ and make sure that you prefix the html you return with:
 `ctx.content` which will contain either the default html, or the content from
 previous extensions.
 
-#### [TODO: @peterbraden] Static Files
+#### Static Files
 
-You may want to load additional static js, images etc. Rather than specify a
-route for each, you can just add `staticFiles` to your `strider.json` - ie.
+If you have additional static files, you can create a `static` directory in
+your extension. These files will be available at `/ext/$modulename/...`
 
-```javascript
-{"staticFiles" : {
-    "/static/mylib.js" : "./js/mylib.js"
-  }
-}
-```
 
