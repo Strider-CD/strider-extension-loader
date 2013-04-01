@@ -75,9 +75,9 @@ module.exports = function(ctx, cb) {
     })
 
 
-    // [TODO @peterbraden] you can register 'blocks' to be inserted at
-    //  specific points in existing pages. Any element with a class
-    // with the 'StriderBlock_' prefix can be specified here:
+  // [TODO @peterbraden] you can register 'blocks' to be inserted at
+  //  specific points in existing pages. Any element with a class
+  // with the 'StriderBlock_' prefix can be specified here:
 
   ctx.registerBlock('HeaderBrand', function(context, cb){
     // context has a lot of useful stuff on it:
@@ -96,9 +96,44 @@ module.exports = function(ctx, cb) {
   // ctx.registerBlock("ProjectConfigPanel", foo)
 
 
+
+
+  cb(null) // No errors in extension
 }
 ```
 
+#### [TODO: @peterbraden] Templates
 
+Because writing a bunch of `registerBlock` calls for simple pieces of template
+overrides is a little tedious, you can also use the following shortcut in your
+strider.json:
 
+```javascript
+{"templates": {
+    "HeaderBrand" : "<h1>An HTML String</h1>"
+  , "FooterTOS" : "./path/to/TOS.html"
+  }
+}
+```
+These are either inline strings or paths to static HTML. There is no templating
+available for these at present.
+
+*Note* If more than one override is specified for a block, then the first one
+will be used. At the moment this means that extensions can squash each other.
+If you want to simply 'append' to a block, use the `registerBlock` method
+and make sure that you prefix the html you return with:
+`ctx.content` which will contain either the default html, or the content from
+previous extensions.
+
+#### [TODO: @peterbraden] Static Files
+
+You may want to load additional static js, images etc. Rather than specify a
+route for each, you can just add `staticFiles` to your `strider.json` - ie.
+
+```javascript
+{"staticFiles" : {
+    "/static/mylib.js" : "./js/mylib.js"
+  }
+}
+```
 
