@@ -75,7 +75,7 @@ module.exports = function(ctx, cb) {
     })
 
 
-  // [TODO @peterbraden] you can register 'blocks' to be inserted at
+  //  you can register 'blocks' to be inserted at
   //  specific points in existing pages. Any element with a class
   // with the 'StriderBlock_' prefix can be specified here:
 
@@ -99,7 +99,7 @@ module.exports = function(ctx, cb) {
 }
 ```
 
-#### [TODO: @peterbraden] Templates
+#### Templates
 
 Because writing a bunch of `registerBlock` calls for simple pieces of template
 overrides is a little tedious, you can also use the following shortcut in your
