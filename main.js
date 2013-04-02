@@ -208,6 +208,10 @@ function initExtensions(extdir, type, context, appInstance, cb) {
         if (l.ext.templates){
           for (var k in l.ext.templates){
             templates[k] = l.ext.templates[k]
+            
+            if (/\.html/.test(l.ext.templates[k])){
+              templates[k] = l.dir + '/' + l.ext.templates[k];
+            } 
           }
         }
       }
