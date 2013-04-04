@@ -2,7 +2,8 @@
 // Loader for Strider extension modules.
 //
 
-var connect = require('connect'),
+var async = require('async'),
+    connect = require('connect'),
     fs = require('fs'),
     path = require('path'),
     Step = require('step');
@@ -12,7 +13,7 @@ var connect = require('connect'),
 // ### Locate Strider Extensions
 //
 // Under a specified path **dir** look for directories containing file
-// 'strider.json'.  These are considered Strider modules.
+// 'strider.json'.  These are considered Strider modules. **dir** may be either a string or a list of strings.
 //
 // **cb** is a function of signature cb(err, extensions) where extensions is an
 // array of filesystems path on success and err is an error on failure.
@@ -23,10 +24,52 @@ function findExtensions(dir, cb) {
 
   var extensions = [];
 
+  // fs.readdir list of paths in parallel.
+  // used when `dir` arg is an array.
+  function readEntries(dirs, cb) {
+    var funcs = []
+    dirs.forEach(function(dir) {
+      funcs.push(function(c) {
+        fs.readdir(dir, function(err, entries) {
+          var l = [];
+          entries.forEach(function(entry) {
+            l.push(path.join(dir, entry))
+          })
+          c(err, l)
+        })
+      })
+    })
+    async.parallel(funcs, function(err, results) {
+        if (err) {
+          return cb(err, null);
+        }
+        // Flatten results and return
+        var flat = [].concat.apply([], results);
+        cb(null, flat);
+      }
+    );
+  }
+
   Step(
     function() {
       // find top-level module dirs
-        fs.readdir(dir, this);
+      if (Array.isArray(dir)) {
+        // dir is a list of paths
+        readEntries(dir, this)
+      } else {
+        // dir is a single path value
+        var self = this;
+        fs.readdir(dir, function(err, entries) {
+          if (err || !entries) {
+            return self(err, entries);
+          }
+          var l = [];
+          entries.forEach(function(entry) {
+            l.push(path.join(dir, entry))
+          });
+          self(err, l);
+        });
+      }
     },
     function(err, entries) {
       if (err) {
@@ -35,11 +78,11 @@ function findExtensions(dir, cb) {
       // Stat extension files in parallel
       var group = this.group();
       entries.forEach(function(module) {
-        var p = path.join(dir, module, filename);
+        var p = path.join(module, filename);
         var cb = group();
         fs.stat(p, function(err, stat) {
           cb(err,
-            {stat:stat, path:path.join(dir, module)});
+            {stat:stat, path:module});
         });
       });
     },
@@ -54,7 +97,7 @@ function findExtensions(dir, cb) {
         // Ensure they are of type file not something else
         if (r.stat.isFile()) {
           extensions.push(r.path);
-        }
+        } 
       });
       cb(null, extensions);
     }
