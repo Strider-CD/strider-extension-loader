@@ -68,32 +68,31 @@ module.exports = function(ctx, cb) {
   // you can use authentication middleware and param validation:
 
   ctx.routes.post("foo/bar"
-    , ctx.middleware.require_auth
+    , ctx.auth.requireUser
     , ctx.middleware.require_params(["url"])
     , function(req, res, next){
       res.send("Hi", req.currentUser.user.email)
     })
 
-
   //  you can register 'blocks' to be inserted at
   //  specific points in existing pages. Any element with a class
   // with the 'StriderBlock_' prefix can be specified here:
 
-  ctx.registerBlock('HeaderBrand', function(context){
+  ctx.registerBlock('HeaderBrand', function(context, cb){
     // context has a lot of useful stuff on it:
 
     var email = context.currentUser.user.email
 
-    return "<h1>FooStrider</h1>");
+    // You can do some async processing here, but bear in mind
+    // you'll be blocking the page load.
+
+    cb(null, "<h1>FooStrider</h1>");
   })
 
 
   // [Note] ctx.registerPanel as seen in the sauce webapp is a legacy method
   // that will eventually disappear and should be rewritten as:
   // ctx.registerBlock("ProjectConfigPanel", foo)
-
-
-
 
   cb(null) // No errors in extension
 }
