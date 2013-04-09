@@ -36,7 +36,7 @@ function mkpath(dirname, mode) {
 
 describe("#findExtensions", function() {
 
-  before(function() {
+  before(function(done) {
     mkpath("./node_modules_noext/foobar");
     mkpath("./node_modules_noext/foobar2");
     mkpath("./node_modules_ext/foobar");
@@ -46,7 +46,13 @@ describe("#findExtensions", function() {
       worker: "worker.js"
     };
     fs.writeFileSync("./node_modules_ext/foobar-strider/strider.json", JSON.stringify(strider_json));
-
+    mkpath("./node_modules_ext2/foobar-strider2");
+    var strider_json = {
+      webapp: "webapp.js",
+      worker: "worker.js"
+    };
+    fs.writeFileSync("./node_modules_ext2/foobar-strider2/strider.json", JSON.stringify(strider_json));
+    done();
   });
 
   it("should not find extensions when there aren't any", function(done) {
@@ -65,8 +71,17 @@ describe("#findExtensions", function() {
     });
   });
 
+  it("should support array-type argument of extension paths", function(done) {
+    loader.findExtensions(['./node_modules_ext', './node_modules_ext2'], function(err, extensions) {
+      expect(extensions).to.have.length(2);
+      expect(extensions).to.contain('node_modules_ext/foobar-strider');
+      expect(extensions).to.contain('node_modules_ext2/foobar-strider2');
+      done();
+    });
+  });
+
   after(function(done) {
-    exec("rm -rf node_modules_noext node_modules_ext", function() {
+    exec("rm -rf node_modules_noext node_modules_ext node_modules_ext2", function() {
       done();
     });
 
