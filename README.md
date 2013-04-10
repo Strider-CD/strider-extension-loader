@@ -156,33 +156,19 @@ For example, with a Detection Rule, you can very easily register build hooks for
 for a node.js project is `has a file named package.json in project root`. This can be described in a Detection Rule like so:
 
 ```javascript
-var rule = {filename:"package.json", exists:true, language:"node.js", prepare:}
+var rule = {filename:"package.json", exists:true, language:"node.js", prepare:"npm install", test:"npm test"}
 ```
 
-Rules are merely objects with some properties. Gumshoe provides a set of special, reserved
-property names which are evaluated as predicates:
+Rules are merely objects with some properties. Strider provides a set of special, reserved property names which are evaluated as predicates:
 
-- `filename`: This is the filename relative to the `baseDir` to look for. Each rule must have a `filename` property or Gumshoe will complain. Value may be a glob as supported by the [node-glob](https://github.com/isaacs/node-glob) library.
+- `filename`: This is the filename relative to the working copy root to look for. Each rule must have a `filename` property or Strider will complain. Value may be a glob as supported by the [node-glob](https://github.com/isaacs/node-glob) library.
 - `grep`: `filename` must exist and content must match the regular expression provided as value to `grep`
 - `exists`: Boolean value. `true` means `filename` must exist, `false` means `filename` must not exist. This does not care what kind of file it is.
 - `jsonKeyExists`: String value. This is the name of a key in the JSON data which must exist in `filename`. Nested keys can be specified using dot notation. For example, "foo.bar" would match `{"foo":{"bar":1}}`.
 
-When a rule succeeds and is matched, it is copied with all properties except
-for the reserved properties. Hence you are free to use any key names you wish
-like `framework`, `language` or `foobar` - they will be handed back to you in
-the result object.
+When a rule matches, Strider looks for build hooks in the result and sets those.
 
-
-The most common thing that you will want to do in that function, is to specify how
-to test and deploy certain types of projects.
-
-Worker plugins generally want to add functionality in one or more of the following ways:
-
-- If a project matches some description (e.g. contains a `package.json` file), add 
-
-
-this is done with a method called
-`addDetectionRule` :
+Detection rules are added via the `addDetectionRule` function on the initialization context:
 
 
 ```javascript
