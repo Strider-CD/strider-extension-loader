@@ -38,11 +38,11 @@ module.exports = function(ctx, cb){
 
 Workers have four build hooks they can add, which run in order and map to the four Strider build phases:
 
-- `prepare`. Prepare is generally tasked with installing dependencies (e.g. `npm install` or building a Python virtual env + `pip install`). Prepare is always executed first. If prepare fails, `test` and `deploy` will not
+- **prepare**. Prepare is generally tasked with installing dependencies (e.g. `npm install` or building a Python virtual env + `pip install`). Prepare is always executed first. If prepare fails, `test` and `deploy` will not
 be run and the build will be considered to have failed.
-- `test`. Execute the tests (e.g. `npm test` or `python setup.py test`). Test is only executed after a successful `prepare`. If `test` fails, `deploy` will not be run and the build will be considered to have failed.
-- `deploy`. Deploy code (e.g. push to Heroku or dotCloud or run a custom Fabric script). Deploy is only executed after a successful `test`. If `deploy` fails, the build will be considered to have failed.
-- `cleanup`. Cleanup is always executed regardless of whether or not any other hooks have failed.
+- **test**. Execute the tests (e.g. `npm test` or `python setup.py test`). Test is only executed after a successful `prepare`. If `test` fails, `deploy` will not be run and the build will be considered to have failed.
+- **deploy**. Deploy code (e.g. push to Heroku or dotCloud or run a custom Fabric script). Deploy is only executed after a successful `test`. If `deploy` fails, the build will be considered to have failed.
+- **cleanup**. Cleanup is always executed regardless of whether or not any other hooks have failed.
 
 Build hooks can either be a `string` value or a `function`. If a build hook is a `string` value, it is treated as if it were a UNIX shell command. This is a convenient way to write simple build hooks. For more complicated hooks, pass a `function` that takes a `context` and a `callback`:
 
