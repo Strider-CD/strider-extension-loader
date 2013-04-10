@@ -60,15 +60,15 @@ The `context` object passed to each build hook function provides the following p
 
 **Functions**
 
-`forkProc` - Fork a process and run a UNIX command in it, automatically harvesting STDIO. **note** You must use `shellWrap` on your command before executing it.
-`striderMessage` - Add a log message to the job output.
-`shellWrap` - Wrap a shell command for use by `forkProc`.
+- `forkProc` - Fork a process and run a UNIX command in it, automatically harvesting STDIO. **note** You must use `shellWrap` on your command before executing it.
+- `striderMessage` - Add a log message to the job output.
+- `shellWrap` - Wrap a shell command for use by `forkProc`.
 
 **Data**
 
-`events` - EventEmitter which may be used for inter-extension co-ordination. This EventEmitter is reset on each job run.
-`workingDir` - Absolute path to the root of the current code repository.
-`jobData` - JSON object containing the job details.
+- `events` - EventEmitter which may be used for inter-extension co-ordination. This EventEmitter is reset on each job run.
+- `workingDir` - Absolute path to the root of the current code repository.
+- `jobData` - JSON object containing the job details.
 
 The `callback` function passed to each build hook accepts a status value. This
 status value is modeled on the UNIX exit code status. 0 means the build hook
