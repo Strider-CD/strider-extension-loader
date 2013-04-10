@@ -22,7 +22,6 @@ Some good examples of Strider worker extensions are:
 
 - [Custom Worker](https://github.com/Strider-CD/strider-custom)
 - [Go Strider](https://github.com/Strider-CD/go-strider)
-- [Simple Worker](https://github.com/Strider-CD/strider-simple-worker)
 
 Strider worker extensions specify a `worker` in their `strider.json` - this is a node
 module that exposes a function that Strider will call with a context:
@@ -168,10 +167,11 @@ Rules are merely objects with some properties. Strider provides a set of special
 
 When a rule matches, Strider looks for build hooks in the result and sets those.
 
-Detection rules are added via the `addDetectionRule` function on the initialization context:
+Detection rules are added via the `addDetectionRule` and `addDetectionRules` functions on the initialization context:
 
 
 ```javascript
+// Add one detection rule
 ctx.addDetectionRule({
       filename: "**.foo", exists: true // If the repo contains a file with a foo extension
     , language: "FooBar"
@@ -179,6 +179,22 @@ ctx.addDetectionRule({
     , prepare: "make foo"
     , test: "foo test"
     })
+
+// Add multiple detection rules at once
+ctx.addDetectionRules([
+    {
+      filename: "**.foo", exists: true // If the repo contains a file with a foo extension
+    , language: "FooBar"
+    , framework: "Foo"
+    , prepare: "make foo"
+    , test: "foo test"
+    },
+    {
+      filename: "package.json", exists: true, // If the repo contains a file named 'package.json'
+    , test:"npm test"
+    , prepare:"npm install
+    }
+])
 ```
 
 
