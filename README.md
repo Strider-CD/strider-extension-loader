@@ -194,7 +194,7 @@ ctx.addDetectionRules([
     {
       filename: "package.json", exists: true, // If the repo contains a file named 'package.json'
     , test:"npm test"
-    , prepare:"npm install
+    , prepare:"npm install"
     }
 ])
 ```
