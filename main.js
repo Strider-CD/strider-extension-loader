@@ -200,8 +200,6 @@ function initExtensions(extdir, type, context, appInstance, cb) {
 
       // now to initialize
       var self = this;
-      // Sort by weight
-      loaded = loaded.sort(function (a, b) { return a.ext.weight - b.ext.weight; });
       for (var i=0; i < loaded.length; i++) {
         var l = loaded[i];
         if (l.ext === null) {
