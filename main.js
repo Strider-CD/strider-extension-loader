@@ -104,6 +104,18 @@ function findExtensions(dir, cb) {
   );
 }
 
+
+
+var parseStriderData = function(json, typ,  ext){
+  ext.id = ext.id || ((typ == "package") ? json.name : json.id)
+
+  ext[typ] = json;
+
+  for (var i in json){
+    ext[i] = json[i];
+  }
+}
+
 //
 //### Load a Strider extension
 //
@@ -123,9 +135,8 @@ function loadExtension(moduleDir, cb) {
       fs.readFile(packageFile, this.parallel());
     },
     function(err, striderData, packageData) {
-      if (err) {
-        return cb(err, null);
-      }
+      if (err) return cb(err, null);
+
       // Parse extension JSON
       try {
         var extensionConfig = JSON.parse(striderData);
@@ -133,9 +144,21 @@ function loadExtension(moduleDir, cb) {
       } catch(e) {
         return cb(e, null);
       }
-      var extension = {
-        package: packageConfig
-      };
+
+      var extension = {};
+
+      parseStriderData(packageConfig, "package", extension);
+      parseStriderData(extensionConfig, "strider", extension);
+
+      if (!extension.id){
+        console.error("\n\nExtension loaded that has no id. Extensions now require ID's",
+          "- check if you're running an out of date plugin or contact the plugin author")
+        return cb("No ID in " + moduleDir)
+      }
+
+      // load workers, webapps
+
+      extensionConfig = extension.strider || {}
       if (extensionConfig.webapp) {
         var webapp = extensionConfig.webapp;
         extension.webapp = require(path.resolve(path.join(moduleDir, webapp)));
@@ -143,11 +166,6 @@ function loadExtension(moduleDir, cb) {
       if (extensionConfig.worker) {
         var worker = extensionConfig.worker;
         extension.worker = require(path.resolve(path.join(moduleDir, worker)));
-      }
-      extension.weight = -1;
-      // For sorting
-      if (extensionConfig.weight) {
-        extension.weight = extensionConfig.weight
       }
       if (extensionConfig.templates){
         extension.templates = extensionConfig.templates;
@@ -199,7 +217,8 @@ function initExtensions(extdir, type, context, appInstance, cb) {
       var initCount = 0
 
       // now to initialize
-      var self = this;
+      var self = this
+
       for (var i=0; i < loaded.length; i++) {
         var l = loaded[i];
         if (l.ext === null) {
