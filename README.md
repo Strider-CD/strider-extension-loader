@@ -212,13 +212,13 @@ as follows:
 module.exports = function(ctx, cb) {
 
   // Add routes to strider:
-  ctx.routes.get("/foo/bar", function(req, res, next){
+  ctx.route.get("/foo/bar", function(req, res, next){
     // This is an express3 route
   })
 
   // you can use authentication middleware and param validation:
 
-  ctx.routes.post("foo/bar"
+  ctx.route.post("foo/bar"
     , ctx.auth.requireUser
     , ctx.middleware.require_params(["url"])
     , function(req, res, next){
