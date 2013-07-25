@@ -256,11 +256,22 @@ function initExtensions(extdir, type, context, appInstance, cb) {
               connect.static(path.join(l.dir, "static")));
         }
         if (type === 'worker' && typeof(l.ext.worker) === 'function') {
-          l.ext.worker(context, self.parallel());
+          try {
+            l.ext.worker(context, self.parallel());
+          } catch (e) {
+            console.log("Error loading extension: %s in directory: %s", e, l.dir)
+            process.exit(1)
+
+          }
           initCount++;
         }
         if (type === 'webapp' && typeof(l.ext.webapp) === 'function') {
-          l.ext.webapp(context, self.parallel());
+          try {
+            l.ext.webapp(context, self.parallel());
+          } catch (e) {
+            console.log("Error loading extension: %s in directory: %s", e, l.dir)
+            process.exit(1)
+          }
           initCount++;
         }
         if (l.ext.templates){
