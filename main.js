@@ -109,6 +109,7 @@ function findExtensions(dir, cb) {
 var parseStriderData = function(json, typ,  ext){
   ext.id = ext.id || ((typ == "package") ? json.name : json.id)
 
+  ext.weight = -1
   ext[typ] = json;
 
   for (var i in json){
@@ -220,7 +221,6 @@ function initExtensions(extdir, type, context, appInstance, cb) {
       var self = this
       // Sort by weight
       loaded = loaded.sort(function (a, b) { return a.ext.weight - b.ext.weight; });
-
       for (var i=0; i < loaded.length; i++) {
         var l = loaded[i];
         if (l.ext === null) {
@@ -263,7 +263,6 @@ function initExtensions(extdir, type, context, appInstance, cb) {
           } catch (e) {
             console.log("Error loading extension: %s in directory: %s", e, l.dir)
             process.exit(1)
-
           }
           initCount++;
         }
