@@ -1,5 +1,7 @@
 # Strider Extension Loader
 
+[![Build Status](https://hosted.stridercd.com/51f050cf04568a0c00000008/strider-cd/strider-extension-loader/badge)](https://hosted.stridercd.com/Strider-CD/strider-extension-loader/)
+
 [Strider](https://github.com/Strider-CD/strider) is an extensible CI system, written
 in node. Strider extensions are simply NPM packages with additional metadata contained
 in a file named `strider.json`. This metadata tells Strider which JavaScript source files
