@@ -9,18 +9,76 @@ var async = require('async'),
     Step = require('step');
 
 
+// p is file ? return json content : false
+var checkStatFile = function(p, cb){
+  fs.stat(p, function(err, stat) {
+    if (err){
+      if (err.code == "ENOENT")
+        return cb(null, false)
+      return cb(err);
+    }
+    if (!stat){
+      return cb(null, false)
+    }
+    if (!stat.isFile())
+      return cb(null, false)
+
+    // TODO catch bad json?
+    var json = JSON.parse(fs.readFileSync(p, "utf8"));
+    return cb(null, json);
+  })
+}
+
+var checkStrider = function(pth, cb){
+  checkStatFile(path.join(pth, "strider.json"), function(err, res){
+    if (err) return cb(err);
+    if (!res) return cb(null, false);
+
+    if (!res.id){
+      console.error("Error in module: ", pth, " : strider.json must include an 'id'")
+    }
+    var out = [res.id || pth, res]
+    cb(err, out)
+  })
+}
+
+var checkPackageJson = function(pth, cb){
+  var p = path.join(pth, "package.json")
+  checkStatFile(p, function(err, exists){
+    if (!err) return cb(err);
+    if (!exists || !exists.strider) return cb(null, false);
+    var res = [exists.name, exists.strider]
+    return cb(null, res);
+  })
+}
+
+var checkModule = function(pth, cb){
+  checkStrider(pth, function(err, res){
+    if (err) return cb(err);
+    if (res) return cb(null, res)
+
+    checkPackageJson(pth, function(err, res){
+      if (err) return cb(err);
+      if (res) return cb(null, res)
+
+      return cb(null, false)
+    })
+  
+  })
+}
+
 //
 // ### Locate Strider Extensions
 //
 // Under a specified path **dir** look for directories containing file
 // 'strider.json'.  These are considered Strider modules. **dir** may be either a string or a list of strings.
 //
+// Or look for package.json with a "strider" key inside. (Preferred way now)
+//
 // **cb** is a function of signature cb(err, extensions) where extensions is an
-// array of filesystems path on success and err is an error on failure.
+// {id : config} mapping on success and err is an error on failure.
 //
 function findExtensions(dir, cb) {
-
-  var filename = "strider.json";
 
   var extensions = [];
 
@@ -78,103 +136,26 @@ function findExtensions(dir, cb) {
       // Stat extension files in parallel
       var group = this.group();
       entries.forEach(function(module) {
-        var p = path.join(module, filename);
         var cb = group();
-        fs.stat(p, function(err, stat) {
-          cb(err,
-            {stat:stat, path:module});
-        });
+        checkModule(module, function(err, ext){
+          if (ext){
+            var out = ext[1]
+            out.weight = out.weight || -1
+            out.typ= "json"
+            out.id = out.id || ext[0] || out.name
+            out.dir = module
+            extensions.push(out)
+            return cb(null, out)
+          }
+          cb(err, false)
+        })
       });
-    },
-    function(err, results) {
-      if (!results)
-        results = [];
-
-      results.forEach(function(r) {
-        if (!r.stat) {
-          return;
-        }
-        // Ensure they are of type file not something else
-        if (r.stat.isFile()) {
-          extensions.push(r.path);
-        } 
-      });
+    }, function(err, bleh){
+      if (err) return cb(err)
       cb(null, extensions);
-    }
-  );
+    })
 }
 
-
-
-var parseStriderData = function(json, typ,  ext){
-  ext.id = ext.id || ((typ == "package") ? json.name : json.id)
-
-  ext.weight = -1
-  ext[typ] = json;
-
-  for (var i in json){
-    ext[i] = json[i];
-  }
-}
-
-//
-//### Load a Strider extension
-//
-// **moduleDir* is a directory containing a strider.json file and a package.json file.
-//
-// **cb** is a function of signature function(err, extension) where extension
-// is an extension object on success and err is an error on failure.
-//
-// Note that this function does not initialize the extension.
-// 
-function loadExtension(moduleDir, cb) {
-  Step(
-    function() {
-      var striderFile = path.join(moduleDir, "strider.json");
-      var packageFile = path.join(moduleDir, "package.json");
-      fs.readFile(striderFile, this.parallel());
-      fs.readFile(packageFile, this.parallel());
-    },
-    function(err, striderData, packageData) {
-      if (err) return cb(err, null);
-
-      // Parse extension JSON
-      try {
-        var extensionConfig = JSON.parse(striderData);
-        var packageConfig = JSON.parse(packageData);
-      } catch(e) {
-        return cb(e, null);
-      }
-
-      var extension = {};
-
-      parseStriderData(packageConfig, "package", extension);
-      parseStriderData(extensionConfig, "strider", extension);
-
-      if (!extension.id){
-        console.error("\n\nExtension loaded that has no id. Extensions now require ID's",
-          "- check if you're running an out of date plugin or contact the plugin author")
-        return cb("No ID in " + moduleDir)
-      }
-
-      // load workers, webapps
-
-      extensionConfig = extension.strider || {}
-      if (extensionConfig.webapp) {
-        var webapp = extensionConfig.webapp;
-        extension.webapp = require(path.resolve(path.join(moduleDir, webapp)));
-      }
-      if (extensionConfig.worker) {
-        var worker = extensionConfig.worker;
-        extension.worker = require(path.resolve(path.join(moduleDir, worker)));
-      }
-      if (extensionConfig.templates){
-        extension.templates = extensionConfig.templates;
-      }
-      cb(null, extension);
-    }
-  );
-}
 
 //
 // ### Initialize Strider Extensions
@@ -201,15 +182,6 @@ function initExtensions(extdir, type, context, appInstance, cb) {
       console.log("Looking for %s-type extensions under %s", type, extdir);
       findExtensions(extdir, this);
     },
-    function(err, extensions) {
-      var group = this.group();
-      extensions.forEach(function(ext) {
-        var cb = group();
-        loadExtension(ext, function(err, res) {
-          cb(err, {ext:res, dir:ext});
-        });
-      });
-    },
     function(err, loaded) {
       if (err) {
         console.error("Error loading extension: %s", err);
@@ -220,15 +192,12 @@ function initExtensions(extdir, type, context, appInstance, cb) {
       // now to initialize
       var self = this
       // Sort by weight
-      loaded = loaded.sort(function (a, b) { return a.ext.weight - b.ext.weight; });
+      loaded = loaded.sort(function (a, b) { return a.weight - b.weight; });
       for (var i=0; i < loaded.length; i++) {
         var l = loaded[i];
-        if (l.ext === null) {
-          continue;
-        }
         // Keep track of which extensions are using which routes.
         // Put this here to allow use of a closure over path and extension.
-        if (type === 'webapp') {
+        if (l.webapp) {
           // Extensions should use context.route.<method>() to add routes
           context.route = {
             get:function(p, f) {
@@ -266,21 +235,21 @@ function initExtensions(extdir, type, context, appInstance, cb) {
           }
           initCount++;
         }
-        if (type === 'webapp' && typeof(l.ext.webapp) === 'function') {
+        if (type === 'webapp' && typeof(l.webapp) === 'function') {
           try {
-            l.ext.webapp(context, self.parallel());
+            l.webapp(context, self.parallel());
           } catch (e) {
             console.log("Error loading extension: %s in directory: %s", e, l.dir)
             process.exit(1)
           }
           initCount++;
         }
-        if (l.ext.templates){
-          for (var k in l.ext.templates){
-            templates[k] = l.ext.templates[k]
+        if (l.templates){
+          for (var k in l.templates){
+            templates[k] = l.templates[k]
             
-            if (/\.html/.test(l.ext.templates[k])){
-              templates[k] = l.dir + '/' + l.ext.templates[k];
+            if (/\.html/.test(l.templates[k])){
+              templates[k] = l.dir + '/' + l.templates[k];
             } 
           }
         }
@@ -305,5 +274,4 @@ function initExtensions(extdir, type, context, appInstance, cb) {
 module.exports = {
   findExtensions: findExtensions,
   initExtensions: initExtensions,
-  loadExtension: loadExtension,
 };
