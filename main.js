@@ -55,17 +55,90 @@ var checkPackageJson = function(pth, cb){
 var checkModule = function(pth, cb){
   checkStrider(pth, function(err, res){
     if (err) return cb(err);
-    if (res) return cb(null, res)
+    if (res){
+      res[1].dir = pth;
+      return cb(null, res)
+    }
 
     checkPackageJson(pth, function(err, res){
       if (err) return cb(err);
-      if (res) return cb(null, res)
+      if (res){
+        res[1].dir = pth
+        return cb(null, res)
+      }
 
       return cb(null, false)
     })
   
   })
 }
+
+// fs.readdir list of paths in parallel.
+// used when `dir` arg is an array.
+function readEntries(dirs, cb) {
+  var funcs = []
+  dirs.forEach(function(dir) {
+    funcs.push(function(c) {
+      fs.readdir(dir, function(err, entries) {
+        var l = [];
+        entries.forEach(function(entry) {
+          l.push(path.join(dir, entry))
+        })
+        c(err, l)
+      })
+    })
+  })
+  async.parallel(funcs, function(err, results) {
+      if (err) {
+        return cb(err, null);
+      }
+      // Flatten results and return
+      var flat = [].concat.apply([], results);
+      cb(null, flat);
+    }
+  );
+}
+
+var findModuleDirs = function(dir, cb) {
+    // find top-level module dirs
+    if (Array.isArray(dir)) {
+      // dir is a list of paths
+      readEntries(dir, cb)
+    } else {
+      // dir is a single path value
+      var self = this;
+      fs.readdir(dir, function(err, entries) {
+        if (err || !entries) {
+          return cb(err, entries);
+        }
+        var l = [];
+        entries.forEach(function(entry) {
+          l.push(path.join(dir, entry))
+        });
+        cb(err, l);
+      });
+    }
+}
+
+var checkModules = function(modules, cb){
+  async.map(modules, checkModule, cb);
+}
+
+var parseModules = function(modules, cb){
+  var extensions = []
+  modules.forEach(function(module){
+    if (module){
+      var out = module[1]
+      out.weight = out.weight || -1
+      out.typ= "json"
+      out.id = out.id || module[0] || out.name
+      extensions.push(out)
+    }
+  })
+  return cb(null, extensions)
+}
+
+
 
 //
 // ### Locate Strider Extensions
@@ -80,80 +153,12 @@ var checkModule = function(pth, cb){
 //
 function findExtensions(dir, cb) {
 
-  var extensions = [];
 
-  // fs.readdir list of paths in parallel.
-  // used when `dir` arg is an array.
-  function readEntries(dirs, cb) {
-    var funcs = []
-    dirs.forEach(function(dir) {
-      funcs.push(function(c) {
-        fs.readdir(dir, function(err, entries) {
-          var l = [];
-          entries.forEach(function(entry) {
-            l.push(path.join(dir, entry))
-          })
-          c(err, l)
-        })
-      })
+  findModuleDirs(dir, function(err, modules){
+    checkModules(modules, function(err, extensions){
+      parseModules(extensions, cb);
     })
-    async.parallel(funcs, function(err, results) {
-        if (err) {
-          return cb(err, null);
-        }
-        // Flatten results and return
-        var flat = [].concat.apply([], results);
-        cb(null, flat);
-      }
-    );
-  }
-
-  Step(
-    function() {
-      // find top-level module dirs
-      if (Array.isArray(dir)) {
-        // dir is a list of paths
-        readEntries(dir, this)
-      } else {
-        // dir is a single path value
-        var self = this;
-        fs.readdir(dir, function(err, entries) {
-          if (err || !entries) {
-            return self(err, entries);
-          }
-          var l = [];
-          entries.forEach(function(entry) {
-            l.push(path.join(dir, entry))
-          });
-          self(err, l);
-        });
-      }
-    },
-    function(err, entries) {
-      if (err) {
-        throw err;
-      }
-      // Stat extension files in parallel
-      var group = this.group();
-      entries.forEach(function(module) {
-        var cb = group();
-        checkModule(module, function(err, ext){
-          if (ext){
-            var out = ext[1]
-            out.weight = out.weight || -1
-            out.typ= "json"
-            out.id = out.id || ext[0] || out.name
-            out.dir = module
-            extensions.push(out)
-            return cb(null, out)
-          }
-          cb(err, false)
-        })
-      });
-    }, function(err, bleh){
-      if (err) return cb(err)
-      cb(null, extensions);
-    })
+  })
 }
 
 
@@ -247,7 +252,7 @@ function initExtensions(extdir, type, context, appInstance, cb) {
         if (l.templates){
           for (var k in l.templates){
             templates[k] = l.templates[k]
-            
+
             if (/\.html/.test(l.templates[k])){
               templates[k] = l.dir + '/' + l.templates[k];
             } 
@@ -272,6 +277,8 @@ function initExtensions(extdir, type, context, appInstance, cb) {
 
 // Exported functions
 module.exports = {
-  findExtensions: findExtensions,
   initExtensions: initExtensions,
+
+  // Exposed only for unit tests...
+  _findExtensions: findExtensions,
 };
