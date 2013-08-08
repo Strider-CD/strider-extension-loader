@@ -3,6 +3,7 @@ var EventEmitter = require('events').EventEmitter,
     expect = require('chai').expect,
     fs = require('fs'),
     loader = require('../main'),
+    _ = require('underscore')
     path = require('path');
 
 function mkpath(dirname, mode) {
@@ -76,8 +77,9 @@ describe("#findExtensions", function() {
   it("should support array-type argument of extension paths", function(done) {
     loader._findExtensions(['./node_modules_ext', './node_modules_ext2'], function(err, extensions) {
       expect(extensions).to.have.length(2);
-      expect(extensions).to.contain('node_modules_ext/foobar-strider');
-      expect(extensions).to.contain('node_modules_ext2/foobar-strider2');
+      var paths = _.pluck(extensions, 'dir')
+      expect(paths).to.contain('node_modules_ext/foobar-strider');
+      expect(paths).to.contain('node_modules_ext2/foobar-strider2');
       done();
     });
   });
@@ -141,15 +143,6 @@ describe("#initExtensions", function() {
     var emitter = new EventEmitter();
     var config = {};
     var l = [];
-    var appInstance = {
-      use: function(path) {
-        urlpaths.push(path);
-      },
-      get: function(p, f) {},
-      post: function(p, f) {},
-      delete: function(p, f) {},
-      put: function(p, f) {},
-    };
     function registerTransportMiddleware(m) {
       l.push(m);
     }
@@ -159,7 +152,7 @@ describe("#initExtensions", function() {
       extensionRoutes: [],
       registerTransportMiddleware: registerTransportMiddleware
     };
-    loader.initExtensions("./node_modules_ext2", "worker", context, appInstance, function(err, initialized) {
+    loader.initWorkerExtensions("./node_modules_ext2", context, function(err, initialized) {
       expect(l).to.have.length(2);
       done();
     });
@@ -188,7 +181,7 @@ describe("#initExtensions", function() {
       extensionRoutes: [],
       registerTransportMiddleware: registerTransportMiddleware
     };
-    loader.initExtensions("./node_modules_ext2", "webapp", context, appInstance, function(err, initialized) {
+    loader.initWebAppExtensions("./node_modules_ext2", context, appInstance, function(err, initialized) {
       expect(l).to.have.length(3);
       // Verify the static paths are mapped for the two webapp extensions
       expect(urlpaths).to.contain("/ext/foobar-strider");
@@ -212,7 +205,7 @@ describe("#initExtensions", function() {
       emitter: emitter,
       extensionRoutes: [],
     };
-    loader.initExtensions("/tmp/nonexistant", "webapp", context, appInstance, function(err, initialized) {
+    loader.initWebAppExtensions("/tmp/nonexistant", context, appInstance, function(err, initialized) {
       expect(initialized).to.have.length(0);
       expect(err).to.eql(null);
       done();
@@ -242,7 +235,7 @@ describe("#initExtensions", function() {
       extensionRoutes: [],
       registerTransportMiddleware: registerTransportMiddleware
     };
-    loader.initExtensions("./node_modules_ext2", "webapp", context, appInstance, function(err, initialized) {
+    loader.initWebAppExtensions("./node_modules_ext2", context, appInstance, function(err, initialized) {
       expect(l).to.have.length(3);
       expect(context.extensionRoutes).to.have.length(1);
       expect(context.extensionRoutes[0].path).to.eql('/foo');
@@ -274,7 +267,7 @@ describe("#initExtensions", function() {
       extensionRoutes: [],
       registerTransportMiddleware: registerTransportMiddleware
     };
-    loader.initExtensions("./node_modules_ext2", "webapp", context, appInstance, function(err, initialized) {
+    loader.initWebAppExtensions("./node_modules_ext2", context, appInstance, function(err, initialized) {
       expect(l).to.have.length(3);
       // Verify the static paths are mapped for the two webapp extensions
       expect(urlpaths).to.contain("/ext/foobar-strider");
