@@ -41,8 +41,8 @@ var checkStrider = function(pth, cb){
 var checkPackageJson = function(pth, cb){
   var p = path.join(pth, "package.json")
   checkStatFile(p, function(err, exists){
-    if (!err) return cb(err);
-    if (!exists || !exists.strider) return cb(null, false);
+    if (err) return cb(err);
+    if (!exists || !exists.strider){ return cb(null, false)};
     var res = [exists.name, exists.strider]
     return cb(null, res);
   })
