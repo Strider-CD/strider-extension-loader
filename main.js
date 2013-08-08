@@ -209,6 +209,25 @@ var initWorkerExtensions = function(dir, ctx, cb){
   })
 }
 
+var initRunnerExtensions = function(dir, ctx, cb){
+  console.log("Looking for worker extensions under %s", dir);
+  findAndSortExtensions(dir, function(err, loaded){
+    if (err) return fail(err);
+    
+    var runners = []
+    for (var i = 0; i<loaded.length; i++){
+      var l = loaded[i];
+      if (l.runner){
+        var runner = require(path.resolve(path.join(l.dir, l.runner)))
+        runner = runner.runner || runner;
+        runners.push(runner)
+      }
+    }
+
+    cb(null, runners);
+  })
+}
+
 
 
 var contextRoute = function(context, appInstance, l){
@@ -314,6 +333,7 @@ module.exports = {
 //
   initWorkerExtensions : initWorkerExtensions,
   initWebAppExtensions: initWebAppExtensions,
+  initRunnerExtensions: initRunnerExtensions,
 
   // Exposed only for unit tests...
   _findExtensions: findExtensions,
