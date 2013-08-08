@@ -11,22 +11,18 @@ var async = require('async'),
 
 // p is file ? return json content : false
 var checkStatFile = function(p, cb){
-  fs.stat(p, function(err, stat) {
-    if (err){
-      if (err.code == "ENOENT")
-        return cb(null, false)
-      return cb(err);
+  var json;
+  try {
+    var json = require(path.resolve(p))
+  } catch (e) {
+    if (e.code == "MODULE_NOT_FOUND")
+      return cb(null,false);
+    else{
+      console.log("!!", e)
+      return cb(e)
     }
-    if (!stat){
-      return cb(null, false)
-    }
-    if (!stat.isFile())
-      return cb(null, false)
-
-    // TODO catch bad json?
-    var json = JSON.parse(fs.readFileSync(p, "utf8"));
-    return cb(null, json);
-  })
+  }
+  return cb(null, json)
 }
 
 var checkStrider = function(pth, cb){
@@ -108,13 +104,13 @@ var findModuleDirs = function(dir, cb) {
       // dir is a single path value
       fs.readdir(dir, function(err, entries) {
         if (err || !entries) {
-          return cb(err, entries);
+          return cb(err, null);
         }
         var l = [];
         entries.forEach(function(entry) {
           l.push(path.join(dir, entry))
         });
-        cb(err, l);
+        return cb(null, l);
       });
     }
 }
@@ -243,10 +239,12 @@ var contextRoute = function(context, appInstance, l){
 var initWebAppExtensions = function(dir, context, appInstance, cb){
 
   var initWebApp = function(l, cb){
-    if (l.webapp) {
+    if (l.webapp && typeof(l.webapp) == "string") {
       l.webapp = require(path.resolve(path.join(l.dir, l.webapp)))
       l.webapp = l.webapp.webapp || l.webapp
+    }
 
+    if (l.webapp){
       // Extensions should use context.route.<method>() to add routes
       context.route = contextRoute(context, appInstance, l)
 
