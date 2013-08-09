@@ -158,7 +158,7 @@ function findExtensions(dir, cb) {
 
 
 var fail = function(msg){
-  console.error("Error loading extension: %s", err);
+  console.error("Error loading extension: %s", msg);
   process.exit(1);
 }
 
@@ -183,7 +183,7 @@ var initWorker = function(l, context, cb){
       try {
         l.worker(context, cb);
       } catch (e) {
-        console.log("Error loading extension: %s in directory: %s", e, l.dir)
+        console.log("Error loading extension:", e, " in directory:", l.dir)
         process.exit(1)
       }
     } else {
@@ -287,7 +287,8 @@ var initWebAppExtensions = function(dir, context, appInstance, cb){
       try {
         return l.webapp(context, cb);
       } catch (e) {
-        fail("error loading extension: %s in directory: %s", e, l.dir)
+        console.trace();
+        fail("error loading extension: "+ e+ " in directory:" + l.dir)
       }
     } else {
       if (l.webapp){
