@@ -311,6 +311,15 @@ var initWebAppExtensions = function(dir, context, appInstance, cb){
 }
 
 
+var listWorkerExtensions = function(dir, cb){
+  findAndSortExtensions(dir, function(err, loaded){
+    if (err) return cb(err);
+
+    loaded = loaded.filter(function(x){ return !!x.worker})
+    cb(null, loaded)
+  })
+}
+
 // Exported functions
 module.exports = {
 
@@ -335,6 +344,7 @@ module.exports = {
   initWorkerExtensions : initWorkerExtensions,
   initWebAppExtensions: initWebAppExtensions,
   initRunnerExtensions: initRunnerExtensions,
+  listWorkerExtensions: listWorkerExtensions,
 
   // Exposed only for unit tests...
   _findExtensions: findExtensions,

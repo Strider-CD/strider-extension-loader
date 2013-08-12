@@ -4,7 +4,8 @@ var EventEmitter = require('events').EventEmitter,
     fs = require('fs'),
     loader = require('../main'),
     _ = require('underscore')
-    path = require('path');
+    ,path = require('path')
+    ,assert = require('assert')
 
 function mkpath(dirname, mode) {
   if (mode === undefined) mode = 0x1ff ^ process.umask();
@@ -285,3 +286,44 @@ describe("#initExtensions", function() {
   });
 
 });
+
+
+
+describe("#listWorkerExtensions", function() {
+
+  before(function(done) {
+    mkpath("./node_modules_noext/foobar");
+    mkpath("./node_modules_noext/foobar2");
+    mkpath("./node_modules_ext/foobar");
+    mkpath("./node_modules_ext/foobar-strider");
+    var strider_json = {
+      id: "foobar-strider",
+      webapp: "webapp.js",
+      worker: "worker.js"
+    };
+    fs.writeFileSync("./node_modules_ext/foobar-strider/strider.json", JSON.stringify(strider_json));
+    mkpath("./node_modules_ext/foobar-strider2");
+    var strider_json = {
+      id: "foobar-strider2",
+      webapp: "webapp.js",
+    };
+    fs.writeFileSync("./node_modules_ext/foobar-strider2/strider.json", JSON.stringify(strider_json));
+    done();
+  });
+
+  it("should get a list", function(done) {
+    loader.listWorkerExtensions('./node_modules_ext', function(err, loaded){
+      assert(!err)
+      assert.equal(loaded.length, 1);
+      done();
+    })
+  })
+
+
+
+  after(function(done) {
+    exec("rm -rf node_modules_noext node_modules_ext node_modules_ext2", function() {
+      done();
+    });
+  })
+})
