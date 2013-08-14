@@ -126,7 +126,7 @@ var parseModules = function(modules, cb){
       var out = module[1]
       out.weight = out.weight || -1
       out.typ= "json"
-      out.id = out.id || module[0] || out.name
+      out.id = out.id || module[0].match(/([a-z-]*)$/)[0] || out.name || module[0]
       extensions.push(out)
     }
   })
@@ -215,6 +215,7 @@ var initRunnerExtensions = function(dir, ctx, cb){
     if (err) return fail(err);
     
     var runners = []
+      console.log(">>>",dir,  loaded)
     for (var i = 0; i<loaded.length; i++){
       var l = loaded[i];
       if (l.runner){
