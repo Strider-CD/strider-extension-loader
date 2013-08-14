@@ -215,7 +215,6 @@ var initRunnerExtensions = function(dir, ctx, cb){
     if (err) return fail(err);
     
     var runners = []
-      console.log(">>>",dir,  loaded)
     for (var i = 0; i<loaded.length; i++){
       var l = loaded[i];
       if (l.runner){
