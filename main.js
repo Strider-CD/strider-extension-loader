@@ -76,7 +76,7 @@ function readEntries(dirs, cb) {
   dirs.forEach(function(dir) {
     funcs.push(function(c) {
       fs.readdir(dir, function(err, entries) {
-        if (err) return c(err)
+        if (err) return c(null, [])
         var l = []
         entries.forEach(function(entry) {
           l.push(path.join(dir, entry))
