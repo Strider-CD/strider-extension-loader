@@ -62,7 +62,7 @@ and other great things.
 This code is loaded for each job that is run, by the process that is
 running the job. This may be the same process as the webapp (as when
 using `strider-simple-runner`), or it might be somewhere else
-entirely. Accordingly, it is recommended that you net depend on
+entirely. Accordingly, it is recommended that you not depend on
 network connections unless absolutely necessary. In many cases, you
 can pass a message up to the strider app and handle it in your
 `webapp` code.
