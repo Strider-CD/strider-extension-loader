@@ -13,6 +13,31 @@ it in your strider repositiory.
 
 This is a small Node.JS library for loading Strider extensions.
 
+## API
+
+### collectExtensions(dirs, done(err))
+
+Collect all strider extensions found in the given directories.
+
+### initWebAppExtensions(context, done(err, extensions))
+
+Load the "webapp" portion of all extensions.
+
+`extensions` looks like `{plugintype: {pluginid: loadedPlugin, ... }, ...}`
+
+### initWorkerExtensions(context, done(err, extensions))
+
+Same as `initWebAppExtensions` but for the `worker` portion.
+
+### initTemplates(done(err, templates))
+
+Load all of the templates from all extensions. `templates` looks like
+`{templatename: stringtemplate, ...}`.
+
+### initStaticDirs(app, done(err))
+
+Register the `/static/` directories of all plugins to map to `/ext/:pluginid`.
+
 ## Strider Extensions
 
 ### Extension types
@@ -77,11 +102,22 @@ Runner plugins do not get loaded in the worker environment.
 ```javascript
 module.exports = {
   config: {}, // mongoose schema. This will be per-project config
-  create: function (emitter, options, callback) {  }
+  appConfig: {}, // mongoose schema. Global config
+  create: function (emitter, options, callback(err, runner)) {  }
 }
 ```
 
-The runner object is expected to handle the following events:
+#### Runner object
+
+##### properties
+
+These are used for the strider admin dashboard.
+
+- `capacity`
+- `running` number of jobs currently running
+- `queued` length of the queue
+
+##### handles events
 
 - `job.new (job)` see strider-runner-core for a description of the `job` data
 - `job.cancel (jobid)` if the runner has the specified job, either
@@ -90,7 +126,7 @@ The runner object is expected to handle the following events:
 Runners are only expected to handle a job if `job.project.runner.id`
 identifies it as belonging to this runner.
 
-The runner object is expected to emit the following events:
+##### emits events
 
 - `browser.update (eventname, data)` this is for proxying internal
   `job.status` events up to the browser
@@ -100,6 +136,7 @@ The runner object is expected to emit the following events:
 #### Extra config
 
 - `panel` see the job plugin section
+- `appPanel` similar to panel, but for global config
 
 ### Provider
 
@@ -116,7 +153,10 @@ module.exports = {
   // mongoose schema for user-level config (like a github OAuth token) and/or cache
   userConfig: {},
   // optional; used by services such as github, bitbucket, etc.
-  listRepos: function (userConfig, done(err, repos)) {}
+  listRepos: function (userConfig, done(err, repos)) {},
+  // namespaced to /ext/:pluginid
+  routes: function (app, context) {
+  }
 }
 ```
 
@@ -247,6 +287,46 @@ module.exports = {
 }
 ```
 
+##### Phase Context
+
+- job
+- project
+- dataDir
+- phase
+
+###### `cmd(cmd || options, done(exitCode))` Run a shell command
+
+```
+{
+  cmd: "shell string" || {command: "", args: [], screen: ""},
+  env: {}, // any extra env variables
+  cwd: "" // defaults to the root directory of the project
+}
+```
+
+If the command contains sensitive information (such as a password or
+OAuth token), you can specify a `screen` command, which is what will
+be output.
+
+###### status(type, args) Update the job status
+
+See `strider-runner-core` for the `job.status.` events. This emits a
+`job.status.[type]` event with [jobid] + arguments.
+
+###### out(data, type) Output
+
+Type defaults to `stdout`. It can be one of `stderr`, `message`,
+`error`, `warn`. `error` and `warn` are prefixed by a colored
+`[STRIDER] WARN | ERROR` and sent to `stderr`. `message` is prefixed
+by a colored `[STRIDER]` and sent to `stdout`.
+
+###### Other context data
+
+You shouldn't need to use these, but they're there.
+
+- logger
+- io
+
 #### Extra config
 
 ##### Icon
@@ -257,10 +337,11 @@ configuration page when a user is enabling plugins.
 
 ##### Config Panel
 
-If the plugin requires special configuration, it can also define a `panel` object in `strider.json`, which looks like:
+If the plugin requires special configuration, it can also define a
+`configPanel` object in `strider.json`, which looks like:
 
 ```javascript
-"panel": {
+"configPanel": {
   "src": "path/to/file.html",
   "controller": "NameOfCtrl"
 }
