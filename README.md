@@ -14,6 +14,93 @@ This is a small Node.JS library for loading Strider extensions.
 
 ## Strider Extensions
 
+### Extension types
+
+- runner: runs the jobs, like strider-docker-runner
+- provider: gets the source code for a project, like strider-github or strider-hg
+- job: effects the way a job runs, runs tests, sets up the environment, like strider-node or strider-sauce
+- basic: does whatever you want
+
+### Webapp vs Worker
+
+There are two environments where plugins are loaded, webapp and worker.
+
+#### Webapp environment
+
+Effects the way the strider webapp works, how it looks, etc. You can
+define templates, serve static files, listen to global strider events,
+and other great things.
+
+#### Worker environment
+
+This code is loaded for each job that is run, by the process that is
+running the job. This may be the same process as the webapp (as when
+using strider-simple-runner), or it might be somewhere else
+entirely. Accordingly, it is recommended that you net depend on
+network connections unless absolutely necessary. In many cases, you
+can pass a message up to the strider app and handle it in your
+`webapp` code.
+
+### Strider.json
+
+To declare your npm package as a strider plugin, include a
+`strider.json` in the base directory. Alternatively, you can have a
+`strider` section to your `package.json`.
+
+`strider.json` schema:
+
+```
+{
+  "id": "pluginid", // must be unique.
+  "type": "runner | provider | job | basic", // defaults to basic
+  "webapp": "filename.js", // things that should be loaded in the webapp environment
+  "worker": "filename.js", // things that should be loaded in the worker environment
+  "templates": {
+    "tplname": "<div>Hello {{ name }}</div>",
+    "tplname": "path/to/tpl.html"
+  }
+}
+```
+
+Additionally, if there is a `/static/` directory, the files within it
+will be accessible at the path `/ext/:pluginid`.
+
+### Runner
+
+Runner plugins do not get loaded in the worker environment.
+
+```
+exports = {
+  config: {}, // mongoose schema. This will be per-project config
+  create: function (emitter, options, callback) {  }
+}
+```
+
+The runner object is expected to handle the following events:
+
+- `job.new (job)` see strider-runner-core for a description of the `job` data
+- `job.cancel (jobid)` if the runner has the specified job, either
+  queued or in process, stop it and fire the `job.canceled` event
+
+Runners are only expected to handle a job if `job.project.runner.id`
+identifies it as belonging to this runner.
+
+The runner object is expected to emit the following events:
+
+- `browser.update (eventname, data)` this is for proxying internal
+  `job.status` events up to the browser
+- `job.queued (jobid, time)`
+- `job.done (data)`
+
+### Provider
+
+#### Webapp
+
+#### Worker
+
+### Job
+### Basic
+
 There are several types of Strider extensions: worker, webapp and template.
 
 ### Workers
@@ -26,34 +113,60 @@ Some good examples of Strider worker extensions are:
 - [Go Strider](https://github.com/Strider-CD/go-strider)
 
 Strider worker extensions specify a `worker` in their `strider.json` - this is a node
-module that exposes a function that Strider will call with a context:
+module that exposes an object conforming to the following structure:
 
-```javascript
-module.exports = function(ctx, cb){
-    console.log("my extension has loaded!")
-    cb(null, null)
+```js
+module.exports = {
+  // an object that defines the schema for plugin config, definied on
+  // a per-project basis. use Mongoose schema format
+  config: {
+    optionOne: String,
+    optionTwo: {type: Boolean, default: true}
+  },
+  // Initialize the plugin for a job
+  //   config: taken from DB config extended by flat file config
+  //   job:    see strider-runner-core for a description of this object
+  //   cb(err, initialized plugin)
+  init: function (config, job, cb) {
+    cb(null, {
+      // string or list - to be added to the PATH
+      path: '/add/to/path',
+      // any extra env variables. These will be present throughout execution
+      env: {
+        CUSTOM: 1
+      },
+      // listen to job events. See strider-runner-core for a listing of events
+      listen: null || function (io) {},
+      // For each phase that you want to deal with, provide either a shell
+      // string or fn(context, done) (or nothing)
+      prepare: 'npm install',
+      test: 'npm test',
+      cleanup: 'rm -rf node_modules'
+    });
+  },
+  // if provided, autodetect is run if the project has *no* plugin
+  // configuration at all. This object is passed to `gumshoe`
+  autodetect: {
+    filename: 'package.json',
+    exists: true,
+    language: 'node.js',
+    framework: null
+  },
+  // all routes will be namespaced (via express-namespace) to /:org/:name/api/:plugin
+  // req.project is the project object from the DB
+  // req.pluginConfig is the db config for this project
+  routes: function (app, models) {
+    app.get('/', function (req, res) {
+      res.send('My Custom Plugin! Responding to project ' + req.project.name);
+    })
+  },
+  // these are namespaced globally, under /api/:plugin
+  globalRoutes: function (app, models) {
+    app.get('/', function (req, res) {
+      res.send('My Custom Plugin!');
+    })
+  }
 }
-```
-
-### Build Hooks
-
-Workers have four build hooks they can add, which run in order and map to the four Strider build phases:
-
-- **prepare**. Prepare is generally tasked with installing dependencies (e.g. `npm install` or building a Python virtual env + `pip install`). Prepare is always executed first. If prepare fails, `test` and `deploy` will not
-be run and the build will be considered to have failed.
-- **test**. Execute the tests (e.g. `npm test` or `python setup.py test`). Test is only executed after a successful `prepare`. If `test` fails, `deploy` will not be run and the build will be considered to have failed.
-- **deploy**. Deploy code (e.g. push to Heroku or dotCloud or run a custom Fabric script). Deploy is only executed after a successful `test`. If `deploy` fails, the build will be considered to have failed.
-- **cleanup**. Cleanup is always executed regardless of whether or not any other hooks have failed.
-
-Build hooks can either be a `string` value or a `function`. If a build hook is a `string` value, it is treated as if it were a UNIX shell command. This is a convenient way to write simple build hooks. For more complicated hooks, pass a `function` that takes a `context` and a `callback`:
-
-```javascript
-
-function prepare(ctx, cb) {
-    ctx.striderMessage('my custom prepare function')
-    cb(0)
-}
-
 ```
 
 ### API
@@ -75,132 +188,6 @@ The `context` object passed to each build hook function provides the following p
 The `callback` function passed to each build hook accepts a status value. This
 status value is modeled on the UNIX exit code status. 0 means the build hook
 completed successfully, non-zero means the buildhook failed.
-
-### Adding Build Hooks
-
-Worker plugins add build hooks in their initialization function:
-
-```javascript
-
-module.exports = function(ctx, cb) {
-
-    ctx.addBuildHook({
-        prepare: function(ctx, cb) {
-            ctx.striderMessage('my prepare build hook')
-            cb(0)
-        },
-        test: function(ctx, cb) {
-            ctx.striderMessage('my test build hook')
-            cb(0)
-        },
-        deploy: function(ctx, cb) {
-            ctx.striderMessage('my deploy build hook')
-            cb(0)
-        },
-        cleanup: function(ctx, cb) {
-            ctx.striderMessage('my cleanup build hook')
-            cb(0)
-        },
-    })
-
-    console.log("my extension loaded!")
-    cb(null, null)
-}
-
-```
-
-The `addBuildHooks` function may be used to conveniently add an array of build hooks at once:
-
-```javascript
-
-module.exports = function(ctx, cb) {
-
-    ctx.addBuildHooks([
-        {prepare: firstPrepareFunction},
-        {prepare: secondPrepareFunction}
-    })
-
-    console.log("my extension loaded!")
-
-    cb(null, null)
-}
-```
-
-### Conditional Build Hooks
-
-Strider will run all build hooks registered by all plugins on each build. What if you only want to run your build hook under certain conditions?
-
-It is up to the individual build hook to determine what to do. If for example a `test` build hook should only run when the `RUN_MY_HOOK` environment variable is set to `myvalue` it could implement the following logic:
-
-```javascript
-
-module.exports = function(ctx, cb) {
-    
-    ctx.addBuildHook({test: function(ctx, cb) {
-        if (process.env.RUN_MY_HOOK && process.env.RUN_MY_HOOK === 'myvalue') {
-            // do my thing
-        } else {
-            // no-op this build hook by returning 'success' while not doing anything
-            return cb(0)
-        }
-    })
-}
-```
-
-Since builds hooks are so frequently dependent upon various conditions, Strider supports a special class of build hook called a Detection Rule.
-
-### Simpler Conditional Build Hooks with Detection Rules
-
-Detection Rules are build hooks which are only executed when a condition
-matches. Rules are JavaScript objects which allow you to describe the match
-conditions using simple predicates. This is powered by the Gumshoe library (https://github.com/niallo/gumshoe).
-
-For example, with a Detection Rule, you can very easily register build hooks for a node.js project. The condition
-for a node.js project is `has a file named package.json in project root`. This can be described in a Detection Rule like so:
-
-```javascript
-var rule = {filename:"package.json", exists:true, language:"node.js", prepare:"npm install", test:"npm test"}
-```
-
-Rules are merely objects with some properties. Strider provides a set of special, reserved property names which are evaluated as predicates:
-
-- `filename`: This is the filename relative to the working copy root to look for. Each rule must have a `filename` property or Strider will complain. Value may be a glob as supported by the [node-glob](https://github.com/isaacs/node-glob) library.
-- `grep`: `filename` must exist and content must match the regular expression provided as value to `grep`
-- `exists`: Boolean value. `true` means `filename` must exist, `false` means `filename` must not exist. This does not care what kind of file it is.
-- `jsonKeyExists`: String value. This is the name of a key in the JSON data which must exist in `filename`. Nested keys can be specified using dot notation. For example, "foo.bar" would match `{"foo":{"bar":1}}`.
-
-When a rule matches, Strider looks for build hooks in the result and sets those.
-
-Detection rules are added via the `addDetectionRule` and `addDetectionRules` functions on the initialization context:
-
-
-```javascript
-// Add one detection rule
-ctx.addDetectionRule({
-      filename: "**.foo", exists: true // If the repo contains a file with a foo extension
-    , language: "FooBar"
-    , framework: "Foo"
-    , prepare: "make foo"
-    , test: "foo test"
-    })
-
-// Add multiple detection rules at once
-ctx.addDetectionRules([
-    {
-      filename: "**.foo", exists: true // If the repo contains a file with a foo extension
-    , language: "FooBar"
-    , framework: "Foo"
-    , prepare: "make foo"
-    , test: "foo test"
-    },
-    {
-      filename: "package.json", exists: true, // If the repo contains a file named 'package.json'
-    , test:"npm test"
-    , prepare:"npm install"
-    }
-])
-```
-
 
 ### Webapps
 
@@ -278,5 +265,3 @@ previous extensions.
 
 If you have additional static files, you can create a `static` directory in
 your extension. These files will be available at `/ext/$modulename/...`
-
-

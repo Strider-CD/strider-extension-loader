@@ -1,0 +1,7 @@
+{
+  "strict": false,
+  "laxcomma": true,
+  "node": true,
+  "undef": true,
+  "-W033": false
+}
