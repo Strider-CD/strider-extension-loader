@@ -377,91 +377,47 @@ module.exports = function (context, done) {
 }
 ```
 
-<!-- the following hasn't yet been updated -->
 
-### API
+### Webapp Plugin Context
 
-The `context` object passed to each build hook function provides the
-following public API:
+This is what gets passed into the `basic` init function, as well as
+the `listen` and `routes` functions of various plugin types.
 
-**Functions**
+- config ; main strider config
+- emitter ; for passing events
+- models
+- logger
+- middleware
+- auth
+- app ; the express app
+- registerBlock
 
-- `forkProc` - Fork a process and run a UNIX command in it,
-  automatically harvesting STDIO. **note** You must use `shellWrap` on
-  your command before executing it.
-- `striderMessage` - Add a log message to the job output.
-- `shellWrap` - Wrap a shell command for use by `forkProc`.
-
-**Data**
-
-- `events` - EventEmitter which may be used for inter-extension
-  co-ordination. This EventEmitter is reset on each job run.
-- `workingDir` - Absolute path to the root of the current code repository.
-- `jobData` - JSON object containing the job details.
-
-The `callback` function passed to each build hook accepts a status value. This
-status value is modeled on the UNIX exit code status. 0 means the build hook
-completed successfully, non-zero means the buildhook failed.
-
-### Webapps
-
-Another type of extension adds endpoints and content to Strider.
-
-This is achieved with a webapp module specified in strider.json which
-exposes a function as follows:
-
+#### registerBlock(name, cb)
 
 ```javascript
-module.exports = function(ctx, cb) {
+ctx.registerBlock('HeaderBrand', function(context, cb){
+  // context has a lot of useful stuff on it:
 
-  // Add routes to strider:
-  ctx.route.get("/foo/bar", function(req, res, next){
-    // This is an express3 route
-  })
+  var email = context.currentUser.user.email
 
-  // you can use authentication middleware and param validation:
+  // You can do some async processing here, but bear in mind
+  // you'll be blocking the page load.
 
-  ctx.route.post("foo/bar"
-    , ctx.auth.requireUser
-    , ctx.middleware.require_params(["url"])
-    , function(req, res, next){
-      res.send("Hi", req.currentUser.user.email)
-    })
-
-  //  you can register 'blocks' to be inserted at
-  //  specific points in existing pages. Any element with a class
-  // with the 'StriderBlock_' prefix can be specified here:
-
-  ctx.registerBlock('HeaderBrand', function(context, cb){
-    // context has a lot of useful stuff on it:
-
-    var email = context.currentUser.user.email
-
-    // You can do some async processing here, but bear in mind
-    // you'll be blocking the page load.
-
-    cb(null, "<h1>FooStrider</h1>");
-  })
-
-
-  // [Note] ctx.registerPanel as seen in the sauce webapp is a legacy method
-  // that will eventually disappear and should be rewritten as:
-  // ctx.registerBlock("ProjectConfigPanel", foo)
-
-  cb(null) // No errors in extension
-}
+  cb(null, "<h1>FooStrider</h1>");
+})
 ```
 
-#### Templates
+#### Templates in strider.json
 
 Because writing a bunch of `registerBlock` calls for simple pieces of template
 overrides is a little tedious, you can also use the following shortcut in your
 strider.json:
 
 ```javascript
-{"templates": {
-    "HeaderBrand" : "<h1>An HTML String</h1>"
-  , "FooterTOS" : "./path/to/TOS.html"
+{
+  "templates": {
+    "HeaderBrand" : "<h1>An HTML String</h1>",
+    "FooterTOS" : "./path/to/TOS.html"
   }
 }
 ```
@@ -474,8 +430,3 @@ If you want to simply 'append' to a block, use the `registerBlock` method
 and make sure that you prefix the html you return with:
 `ctx.content` which will contain either the default html, or the content from
 previous extensions.
-
-#### Static Files
-
-If you have additional static files, you can create a `static` directory in
-your extension. These files will be available at `/ext/$modulename/...`
