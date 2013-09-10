@@ -258,6 +258,8 @@ var contextRoute = function(context, appInstance, l){
 
 var initWebAppExtensions = function(dir, context, appInstance, cb){
 
+  var initializedWebAppExtensions = []
+
   var initWebApp = function(l, cb){
     if (l.webapp && typeof(l.webapp) == "string") {
       l.webapp = require(path.resolve(path.join(l.dir, l.webapp)))
@@ -271,7 +273,7 @@ var initWebAppExtensions = function(dir, context, appInstance, cb){
       // Add a static fileserver mounted at /ext/$module/ which maps to
       // moduledir/static
       appInstance.use('/ext/' + path.basename(l.dir),
-          connect.static(path.join(l.dir, "static")));
+          connect.static(path.join(l.dir, "static")))
     }
 
     if (l.templates){
@@ -279,14 +281,18 @@ var initWebAppExtensions = function(dir, context, appInstance, cb){
         templates[k] = l.templates[k]
 
         if (/\.html/.test(l.templates[k])){
-          templates[k] = l.dir + '/' + l.templates[k];
+          templates[k] = l.dir + '/' + l.templates[k]
         }
       }
     }
 
     if (typeof(l.webapp) === 'function') {
       try {
-        return l.webapp(context, cb);
+        return l.webapp(context, function(err) {
+          if (err) return cb(err)
+          initializedWebAppExtensions.push(l)
+          cb(null)
+        })
       } catch (e) {
         console.trace();
         fail("error loading extension: "+ e+ " in directory:" + l.dir)
@@ -305,8 +311,8 @@ var initWebAppExtensions = function(dir, context, appInstance, cb){
   console.log("looking for webapp extensions under %s", dir);
   findAndSortExtensions(dir, function(err, loaded){
     if (err) return fail(err);
-    async.map(loaded, initWebApp, function(err, loaded){
-      cb(null, loaded || []);
+    async.map(loaded, initWebApp, function(err){
+      cb(null, initializedWebAppExtensions)
     })
   })
 }
@@ -314,9 +320,18 @@ var initWebAppExtensions = function(dir, context, appInstance, cb){
 
 var listWorkerExtensions = function(dir, cb){
   findAndSortExtensions(dir, function(err, loaded){
-    if (err) return cb(err);
+    if (err) return cb(err)
 
     loaded = loaded.filter(function(x){ return !!x.worker})
+    cb(null, loaded)
+  })
+}
+
+var listWebAppExtensions = function(dir, cb){
+  findAndSortExtensions(dir, function(err, loaded){
+    if (err) return cb(err)
+
+    loaded = loaded.filter(function(x){ return !!x.webapp})
     cb(null, loaded)
   })
 }
@@ -334,7 +349,6 @@ module.exports = {
 //  - config (strider config object)
 //  - emitter (global eventemitter)
 //  - extensionRoutes (list of webapp routes)
-//  - registerTransportMiddleware (function)
 //
 // ***appInstance*** should be an ExpressJS app instance, and is only needed
 // for webapp extensions. Can be left null/undefined for worker extensions.
@@ -346,6 +360,7 @@ module.exports = {
   initWebAppExtensions: initWebAppExtensions,
   initRunnerExtensions: initRunnerExtensions,
   listWorkerExtensions: listWorkerExtensions,
+  listWebAppExtensions: listWebAppExtensions,
 
   // Exposed only for unit tests...
   _findExtensions: findExtensions,
