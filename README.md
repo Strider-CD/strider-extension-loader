@@ -140,7 +140,9 @@ identifies it as belonging to this runner.
 
 ### Provider
 
-Provider plugins that need an ssh keypair are encouraged to use the `privkey` and `pubkey` that are defined for each project. They are attributes on the `project` object.
+Provider plugins that need an ssh keypair are encouraged to use the
+`privkey` and `pubkey` that are defined for each project. They are
+attributes on the `project` object.
 
 #### Webapp
 
@@ -193,11 +195,12 @@ module.exports = {
 
 ##### Extra Config
 
-Use `panel` for provider config.
+Use `panel` for project-level config, and `userPanel` for user-level config.
 
 - `inline_icon` you can also define a `24x24` icon for the
   `display_url` links. If this is not a path, it is assumed to be the
-  name of an icon from `FontAwesome` and will be loaded as such.
+  name of an icon from `FontAwesome` (without the `icon-` prefix) and
+  will be loaded as such. Defaults to `external-link`.
 
 ### Job
 
@@ -338,12 +341,12 @@ configuration page when a user is enabling plugins.
 ##### Config Panel
 
 If the plugin requires special configuration, it can also define a
-`configPanel` object in `strider.json`, which looks like:
+`panel` object in `strider.json`, which looks like:
 
 ```javascript
-"configPanel": {
+"panel": {
   "src": "path/to/file.html",
-  "controller": "NameOfCtrl"
+  "controller": "NameOfCtrl" // defaults to [pluginid]Controller
 }
 ```
 
