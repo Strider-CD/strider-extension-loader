@@ -217,18 +217,18 @@ Use `panel` for project-level config, and `userPanel` for user-level config.
    //   req.user is the current user
    //   req.pluginConfig() -> get the config for this plugin
    //   req.pluginConfig(config, cb(err)) -> set the config for this plugin
-   routes: function (app) {
+   routes: function (app, context) {
    },
    // Define global routes
    //   all routes namespaced within /api/:pluginid
    //   req.user is the current user
-   globalRoutes: function (app) {
+   globalRoutes: function (app, context) {
    },
    // Listen for global events
    //   all job-local events that begin with `plugin.` are proxied to
    //   the main strider eventemitter, so you can listen for them here.
    //   Other events include `job.new`, `job.done` and `browser.update`.
-   listen: function (emitter) {
+   listen: function (emitter, context) {
    }
 }
 ```
