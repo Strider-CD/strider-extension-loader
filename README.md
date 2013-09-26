@@ -150,11 +150,18 @@ attributes on the `project` object.
 module.exports = {
   // mongoose schema for project-specific config
   config: {},
+ 
   // mongoose schema for user-level config (like a github OAuth token) and/or cache
   userConfig: {},
   // optional; used by services such as github, bitbucket, etc.
  
-  // listRepos
+  // getFile: used to get the .strider.json file
+  getFile: function (filepath, userConfig, config, project, done(err, filecontents))
+ 
+  // getBranches: get the branches for a repository
+  getBranches: function (userConfig, config, project, done(err, [branchname, ...]))
+ 
+  // listRepos: only used by providers that connect to a hosted service.
   // repos: { groupname: [repo, ...], groupname: ... }
   listRepos: function (userConfig, done(err, repos)) {},
  
