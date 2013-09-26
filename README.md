@@ -149,27 +149,31 @@ attributes on the `project` object.
 ```javascript
 module.exports = {
   // mongoose schema for project-specific config
-  config: {
-    /* `url: String` and `display_url: String` are automatically defined. */
-  },
+  config: {},
   // mongoose schema for user-level config (like a github OAuth token) and/or cache
   userConfig: {},
   // optional; used by services such as github, bitbucket, etc.
+ 
+  // listRepos
+  // repos: { groupname: [repo, ...], groupname: ... }
   listRepos: function (userConfig, done(err, repos)) {},
+ 
+  initialize: function (userConfig, repo, done(err, name, display_url, config)) {},
   // namespaced to /ext/:pluginid
   routes: function (app, context) {
   }
 }
 ```
 
-The `repos` that are returned by `listRepos` are a list of objects
+The `repos` that are returned by `listRepos` contain objects
 which, when activated, will be the provider config for the project. As
-such, it is required to have a `url` that is unique, and it should
-also define a `display_url` where appropriate. All other config is up
-to you.
+such, it is required to have a `url` that is unique, a `name` that
+looks like "org/name" and it should also define a `display_url` where
+appropriate. All other config is up to you.
 
 ```javascript
 {
+   name: 'some/name', // should have exactly one '/'
    // this has to be unique; it's how we identify whether a project
    // has already been configured.
    url: 'http://example.com/unique/url.git',
