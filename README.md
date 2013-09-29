@@ -258,8 +258,9 @@ module.exports = {
   //   config: the config for this job, made by extending the DB config
   //           with any flat-file config
   //   job:    see strider-runner-core for a description of that object
+  //   context: currently only defines "dataDir"
   //   cb(err, initializedPlugin)
-  init: function (config, job, cb) {
+  init: function (config, job, context, cb) {
     return cb(null, {
       // string or list - to be added to the PATH
       path: path.join(__dirname, 'bin'),
@@ -273,7 +274,7 @@ module.exports = {
       },
       // For each phase that you want to deal with, provide either a
       // shell command [string] for a fn(context, done(err, didrun))
-      env: 'nvm install ' + (config.version || '0.10'),
+      environment: 'nvm install ' + (config.version || '0.10'),
       prepare: 'npm install',
       test: function (context, done) {
         checkSomething(context, function (shouldDoThings) {
