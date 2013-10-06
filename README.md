@@ -164,6 +164,15 @@ module.exports = {
   // listRepos: only used by providers that connect to a hosted service.
   // repos: { groupname: [repo, ...], groupname: ... }
   listRepos: function (userConfig, done(err, repos)) {},
+
+  // if this provider plugin needs setup (in github's case, oauth) this string
+  // represents the href link to the page to handle that.
+  setupLink: "/ext/github/oauth",
+
+  // determine whether or not this provider is setup for this user.
+  // e.g. for github, that we have an oauth key
+  // returns boolean
+  isSetup: function (account) {},
  
   initialize: function (userConfig, repo, done(err, name, display_url, config)) {},
   // namespaced to /ext/:pluginid
