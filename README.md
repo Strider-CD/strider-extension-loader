@@ -15,37 +15,131 @@ This is a small Node.JS library for loading Strider extensions.
 
 ## API
 
-### collectExtensions(dirs, done(err))
+```
+var Loader = require('strider-extension-loader')
+  , loader = new Loader()
+```
+
+### new Loader(lesspaths)
+`lesspaths` is an optional list of directories that will be made
+available while compiling plugins' `less` style files.
+
+### .collectExtensions(dirs, done(err))
 
 Collect all strider extensions found in the given directories.
 
-### initWebAppExtensions(context, done(err, extensions))
+### .initWebAppExtensions(context, done(err, extensions))
 
 Load the "webapp" portion of all extensions.
 
 `extensions` looks like `{plugintype: {pluginid: loadedPlugin, ... }, ...}`
 
-### initWorkerExtensions(context, done(err, extensions))
+The structure of the `loadedPlugin` object depend on the plugin type.
+- job: 
+
+### .initWorkerExtensions(context, done(err, extensions))
 
 Same as `initWebAppExtensions` but for the `worker` portion.
 
-### initTemplates(done(err, templates))
+### .initTemplates(done(err, templates))
 
 Load all of the templates from all extensions. `templates` looks like
 `{templatename: stringtemplate, ...}`.
 
-### initStaticDirs(app, done(err))
+### .initStaticDirs(app, done(err))
 
 Register the `/static/` directories of all plugins to map to `/ext/:pluginid`.
+
+### .initConfig(jspath, csspath, done(err, configs))
+
+Assets for configuring plugins on the `/my/project/config` page.
+
+Collect the html, js, and css for all plugins. This is per-project
+config. js scripts will each be wrapped in an anonymous function to
+namespace it, and concatenated into one file (in future it will also
+be minified). Stylesheets will also be concatenated together, and
+`.less` files will be compiled to css (with the lesspaths available
+for imports).
+
+Then the js and css are written to the files specified `jspath` and
+`csspath`.
+
+Html for the templates are available on the `configs` objects.
+
+Configs look like `{plugintype: {pluginid: config, ...}, ...}` and
+`config` looks like:
+
+```js
+{
+  id: "myplugin",
+  controller: "MyController", // defaults to [plugintype]Controller
+  html: "<the>html</the>",    // loaded from config.template
+  icon: "icon.png",           // relative to the plugin's `static` directory
+  title: "My Plugin"
+}
+```
+
+Basically, this is constructed from the `strider` section of
+package.json.
+
+```js
+"strider": {
+  "id": "myplugin",
+  "title": "My Plugin",
+  "icon": "icon.png", // should be in the ./static dir
+  "config": {
+    "controller": // defaults to "JobController" for job plugins, "ProviderController", etc.
+    "script":     // path where the js should be loaded from. Path defaults to "config/config.js"
+    "style":      // defaults to "config/config.less"
+    "template":   // defaults to "config/config.html"
+  }
+}
+```
+
+I hope that's clear.
+
+#### Angular Controller
+
+If you don't need to do anything fancy, you can just use the default
+controller for your plugin type. Take a look in
+[strider's public/javascript/pages/config.js](asd) for the source of
+those controllers. Basically, each controller makes available a
+`config` object on the scope, which is populated by the plugin's
+config for the currently selected branch. Also a `save()` function is
+available on the scope.
+
+So, for example, the simplest configuration template for any plugin
+type could just have
+
+```html
+<input ng-model="config.oneAttr" placeholder="One Attribute Here">
+<button class="btn" ng-click="save()">Save</button>
+```
+
+No javascript required. Just put that in "config/config.html" and
+you're done.
+
+### .initUserConfig(jspath, csspath, done)
+
+This is very similar to initConfig, but for per-user as opposed to
+per-project config. For provider plugins, the default file name is
+`config/accountConfig.html, js, less`, and for all other plugin types
+it's `config/userConfig.html, js, less`.
+
+### .initStatusBlocks(jspath, csspath, done)
+
+Status blocks allow plugins to 
 
 ## Strider Extensions
 
 ### Extension types
 
-- runner: runs the jobs, like strider-docker-runner
-- provider: gets the source code for a project, like strider-github or strider-hg
-- job: effects the way a job runs, runs tests, sets up the environment, like strider-node or strider-sauce
-- basic: does whatever you want
+- **runner:** runs the jobs, like strider-simple-runner
+- **provider:** gets the source code for a project, like strider-github,
+  strider-bitbucket or strider-git. Can be hosted or regular.
+- **job:** setup the environment, run tests, deploy etc. like strider-node or strider-sauce
+- **basic:** do whatever you want. If you need more power, use this, but
+  you don't get the helpers provided by the more specific plugin types.
 
 ### Webapp vs Worker
 
@@ -79,6 +173,7 @@ To declare your npm package as a strider plugin, include a
 {
   "id": "pluginid", // must be unique.
   "title": "Human Readable",
+  "icon": "icon.png", // relative to the plugin's `static` directory
   "type": "runner | provider | job | basic", // defaults to basic
   "webapp": "filename.js", // loaded in the webapp environment
   "worker": "filename.js", // loaded in the worker environment
@@ -86,6 +181,12 @@ To declare your npm package as a strider plugin, include a
     "tplname": "<div>Hello {{ name }}</div>",
     "tplname": "path/to/tpl.html"
   },
+  "config": { // project-specific configuration
+    "controller": // defaults to "JobController" for job plugins, "ProviderController", etc.
+    "script":     // path where the js should be loaded from. Path defaults to "config/config.js"
+    "style":      // defaults to "config/config.less". Can be less or css
+    "template":   // defaults to "config/config.html"
+  }
   // other configurations
 }
 ```
