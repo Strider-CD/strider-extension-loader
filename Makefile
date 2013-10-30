@@ -8,6 +8,6 @@ lint:
 	@echo "Linted"
 
 test-only:
-	@echo "No tests"
+	@./node_modules/.bin/mocha -R tap
 
 .PHONY: test test-only lint
