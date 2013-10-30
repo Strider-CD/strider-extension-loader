@@ -3,6 +3,7 @@ var EventEmitter = require('events').EventEmitter,
     expect = require('chai').expect,
     fs = require('fs'),
     loader = require('../main'),
+    findExtensions = require('../lib/utils.js').findExtensions
     _ = require('underscore')
     ,path = require('path')
     ,assert = require('assert')
@@ -60,7 +61,7 @@ describe("#findExtensions", function() {
   });
 
   it("should not find extensions when there aren't any", function(done) {
-    loader._findExtensions('./node_modules_noext', function(err, extensions) {
+    findExtensions('./node_modules_noext', function(err, extensions) {
       expect(extensions).to.be.empty;
       done();
     });
@@ -68,7 +69,7 @@ describe("#findExtensions", function() {
   });
 
   it("should find an extension when there is one", function(done) {
-    loader._findExtensions('./node_modules_ext', function(err, extensions) {
+    findExtensions('./node_modules_ext', function(err, extensions) {
       expect(extensions).to.have.length(1);
       expect(extensions[0].dir).to.contain('node_modules_ext/foobar-strider');
       done();
@@ -76,7 +77,7 @@ describe("#findExtensions", function() {
   });
 
   it("should support array-type argument of extension paths", function(done) {
-    loader._findExtensions(['./node_modules_ext', './node_modules_ext2'], function(err, extensions) {
+    findExtensions(['./node_modules_ext', './node_modules_ext2'], function(err, extensions) {
       expect(extensions).to.have.length(2);
       var paths = _.pluck(extensions, 'dir')
       expect(paths).to.contain('node_modules_ext/foobar-strider');
