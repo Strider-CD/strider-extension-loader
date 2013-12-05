@@ -380,7 +380,7 @@ module.exports = {
       //   Look at strider-runner-core for an
       //   enumeration of the events. Emit plugin.[pluginid].myevent to
       //   communicate things up to the browser or to the webapp.
-      listen: function (emitter) {
+      listen: function (emitter, context) {
       },
       // For each phase that you want to deal with, provide either a
       // shell command [string] for a fn(context, done(err, didrun))
