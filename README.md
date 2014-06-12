@@ -343,6 +343,8 @@ Use `panel` for project-level config, and `userPanel` for user-level config.
    // Define global routes
    //   all routes namespaced within /api/:pluginid
    //   req.user is the current user
+   //   req.user.account_level can be used for authorization
+   //      0 - anonymous, 1 - authed, 2 - admin / collaborator
    globalRoutes: function (app, context) {
    },
    // Listen for global events
