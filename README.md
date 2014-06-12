@@ -333,7 +333,7 @@ Use `panel` for project-level config, and `userPanel` for user-level config.
    // Define project-specific routes
    //   all routes created here are namespaced within /:org/:repo/api/:pluginid
    //   req.project is the current project
-   //   req.accessLevel is the current user's access level for the project
+   //   req.user.account_level is the current user's access level for the project
    //      0 - anonymous, 1 - authed, 2 - admin / collaborator
    //   req.user is the current user
    //   req.pluginConfig() -> get the config for this plugin
