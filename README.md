@@ -341,7 +341,7 @@ Use `panel` for project-level config, and `userPanel` for user-level config.
    routes: function (app, context) {
    },
    // Define global routes
-   //   all routes namespaced within /api/:pluginid
+   //   all routes namespaced within /ext/:pluginid
    //   req.user is the current user
    globalRoutes: function (app, context) {
    },
