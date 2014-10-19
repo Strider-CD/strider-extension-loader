@@ -14,13 +14,16 @@ This is a small Node.JS library for loading Strider extensions.
 ## API
 
 ```
-var Loader = require('strider-extension-loader')
-  , loader = new Loader()
+var Loader = require('strider-extension-loader');
+var loader = new Loader();
 ```
 
-### new Loader(lesspaths)
-`lesspaths` is an optional list of directories that will be made
-available while compiling plugins' `less` style files.
+### new Loader(lesspaths, isNamespaced)
+* `lesspaths` is an optional list of directories that will be made
+  available while compiling plugins' `less` style files.
+* `isNamespaced` is for backwards compatibility with older versions
+  where the default type controllers e.g. `JobController` were not namespaced.
+  For versions < 1.6.0 this property should NOT be set.
 
 ### .collectExtensions(dirs, done(err))
 
@@ -30,7 +33,7 @@ Collect all strider extensions found in the given directories.
 
 Load the "webapp" portion of all extensions.
 
-`extensions` looks like `{plugintype: {pluginid: loadedPlugin, ... }, ...}`
+`extensions` looks like `{ plugintype: { pluginid: loadedPlugin, ... }, ... }`
 
 The structure of the `loadedPlugin` object depend on the plugin type.
 - job: 
@@ -42,7 +45,7 @@ Same as `initWebAppExtensions` but for the `worker` portion.
 ### .initTemplates(done(err, templates))
 
 Load all of the templates from all extensions. `templates` looks like
-`{templatename: stringtemplate, ...}`.
+`{ templatename: stringtemplate, ... }`.
 
 ### .initStaticDirs(app, done(err))
 
@@ -64,7 +67,7 @@ Then the js and css are written to the files specified `jspath` and
 
 Html for the templates are available on the `configs` objects.
 
-Configs look like `{plugintype: {pluginid: config, ...}, ...}` and
+Configs look like `{ plugintype: { pluginid: config, ...}, ... }` and
 `config` looks like:
 
 ```js
@@ -86,7 +89,7 @@ package.json.
   "title": "My Plugin",
   "icon": "icon.png", // should be in the ./static dir
   "config": {
-    "controller": // defaults to "JobController" for job plugins, "ProviderController", etc.
+    "controller": // defaults to "Config.JobController" for job plugins, "Config.ProviderController", etc.
     "script":     // path where the js should be loaded from. Path defaults to "config/config.js"
     "style":      // defaults to "config/config.less"
     "template":   // defaults to "config/config.html"
@@ -100,7 +103,7 @@ I hope that's clear.
 
 If you don't need to do anything fancy, you can just use the default
 controller for your plugin type. Take a look in
-[strider's public/javascript/pages/config.js](asd) for the source of
+[strider's `client/config/controllers` directory][config-controllers] for the source of
 those controllers. Basically, each controller makes available a
 `config` object on the scope, which is populated by the plugin's
 config for the currently selected branch. Also a `save()` function is
@@ -180,7 +183,7 @@ To declare your npm package as a strider plugin, include a
     "tplname": "path/to/tpl.html"
   },
   "config": { // project-specific configuration
-    "controller": // defaults to "JobController" for job plugins, "ProviderController", etc.
+    "controller": // defaults to "Config.JobController" for job plugins, "Config.ProviderController", etc.
     "script":     // path where the js should be loaded from. Path defaults to "config/config.js"
     "style":      // defaults to "config/config.less". Can be less or css
     "template":   // defaults to "config/config.html"
@@ -508,28 +511,28 @@ module.exports = function (context, done) {
 This is what gets passed into the `basic` init function, as well as
 the `listen` and `routes` functions of various plugin types.
 
-- config ; main strider config
-- emitter ; for passing events
+- config -- main strider config
+- emitter -- for passing events
 - models
 - logger
 - middleware
 - auth
-- app ; the express app
+- app -- the express app
 - registerBlock
 
 #### registerBlock(name, cb)
 
 ```javascript
-ctx.registerBlock('HeaderBrand', function(context, cb){
+ctx.registerBlock('HeaderBrand', function(context, cb) {
   // context has a lot of useful stuff on it:
 
-  var email = context.currentUser.user.email
+  var email = context.currentUser.user.email;
 
   // You can do some async processing here, but bear in mind
   // you'll be blocking the page load.
 
-  cb(null, "<h1>FooStrider</h1>");
-})
+  cb(null, '<h1>FooStrider</h1>');
+});
 ```
 
 #### Templates in strider.json
@@ -541,8 +544,8 @@ strider.json:
 ```javascript
 {
   "templates": {
-    "HeaderBrand" : "<h1>An HTML String</h1>",
-    "FooterTOS" : "./path/to/TOS.html"
+    "HeaderBrand": "<h1>An HTML String</h1>",
+    "FooterTOS": "./path/to/TOS.html"
   }
 }
 ```
@@ -555,3 +558,5 @@ If you want to simply 'append' to a block, use the `registerBlock` method
 and make sure that you prefix the html you return with:
 `ctx.content` which will contain either the default html, or the content from
 previous extensions.
+
+[config-controllers]: https://github.com/Strider-CD/strider/tree/master/client/config/controllers
