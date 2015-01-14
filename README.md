@@ -13,23 +13,24 @@ This is a small Node.JS library for loading Strider extensions.
 
 ## API
 
-```
+```js
 var Loader = require('strider-extension-loader');
+
 var loader = new Loader();
 ```
 
-### new Loader(lesspaths, isNamespaced)
+### `new Loader(lesspaths, isNamespaced)`
 * `lesspaths` is an optional list of directories that will be made
   available while compiling plugins' `less` style files.
 * `isNamespaced` is for backwards compatibility with older versions
   where the default type controllers e.g. `JobController` were not namespaced.
   For versions < 1.6.0 this property should NOT be set.
 
-### .collectExtensions(dirs, done(err))
+### `.collectExtensions(dirs, done(err))`
 
 Collect all strider extensions found in the given directories.
 
-### .initWebAppExtensions(context, done(err, extensions))
+### `.initWebAppExtensions(context, done(err, extensions))`
 
 Load the "webapp" portion of all extensions.
 
@@ -38,20 +39,20 @@ Load the "webapp" portion of all extensions.
 The structure of the `loadedPlugin` object depend on the plugin type.
 - job: 
 
-### .initWorkerExtensions(context, done(err, extensions))
+### `.initWorkerExtensions(context, done(err, extensions))`
 
 Same as `initWebAppExtensions` but for the `worker` portion.
 
-### .initTemplates(done(err, templates))
+### `.initTemplates(done(err, templates))`
 
 Load all of the templates from all extensions. `templates` looks like
 `{ templatename: stringtemplate, ... }`.
 
-### .initStaticDirs(app, done(err))
+### `.initStaticDirs(app, done(err))`
 
 Register the `/static/` directories of all plugins to map to `/ext/:pluginid`.
 
-### .initConfig(jspath, csspath, done(err, configs))
+### `.initConfig(jspath, csspath, done(err, configs))`
 
 Assets for configuring plugins on the `/my/project/config` page.
 
@@ -120,14 +121,14 @@ type could just have
 No javascript required. Just put that in "config/config.html" and
 you're done.
 
-### .initUserConfig(jspath, csspath, done)
+### `.initUserConfig(jspath, csspath, done)`
 
 This is very similar to initConfig, but for per-user as opposed to
 per-project config. For provider plugins, the default file name is
 `config/accountConfig.html, js, less`, and for all other plugin types
 it's `config/userConfig.html, js, less`.
 
-### .initStatusBlocks(jspath, csspath, done)
+### `.initStatusBlocks(jspath, csspath, done)`
 
 Status blocks allow plugins to 
 
@@ -205,8 +206,8 @@ Runner plugins do not get loaded in the worker environment.
 module.exports = {
   config: {}, // mongoose schema. This will be per-project config
   appConfig: {}, // mongoose schema. Global config
-  create: function (emitter, options, callback(err, runner)) {  }
-}
+  create: function (emitter, options, callback(err, runner)) {}
+};
 ```
 
 #### Runner object
@@ -278,8 +279,7 @@ module.exports = {
  
   initialize: function (userConfig, repo, done(err, name, display_url, config)) {},
   // namespaced to /ext/:pluginid
-  routes: function (app, context) {
-  }
+  routes: function (app, context) {}
 }
 ```
 
@@ -296,7 +296,7 @@ appropriate. All other config is up to you.
    // has already been configured.
    url: 'http://example.com/unique/url.git',
    // optional - linked to from the project page
-   display_url: 'http://example.com/path/to/repo',
+   display_url: 'http://example.com/path/to/repo'
    // everything else is up to you.
 }
 ```
@@ -310,9 +310,8 @@ module.exports = {
   // get the source code for a project. This is where the real work gets done.
   //   dest: the path to put things
   //   context: contains runCmd, io (for event passing)
-  fetch: function (dest, userConfig, config, job, context, done) {
-  },
-}
+  fetch: function (dest, userConfig, config, job, context, done) {}
+};
 ```
 
 ##### Extra Config
@@ -339,21 +338,18 @@ Use `panel` for project-level config, and `userPanel` for user-level config.
    //   req.user is the current user
    //   req.pluginConfig() -> get the config for this plugin
    //   req.pluginConfig(config, cb(err)) -> set the config for this plugin
-   routes: function (app, context) {
-   },
+   routes: function (app, context) {},
    // Define global routes
    //   all routes namespaced within /ext/:pluginid
    //   req.user is the current user
    //   req.user.account_level can be used for authorization
    //      0 - anonymous, 1 - authed, 2 - admin / collaborator
-   globalRoutes: function (app, context) {
-   },
+   globalRoutes: function (app, context) {},
    // Listen for global events
    //   all job-local events that begin with `plugin.` are proxied to
    //   the main strider eventemitter, so you can listen for them here.
    //   Other events include `job.new`, `job.done` and `browser.update`.
-   listen: function (emitter, context) {
-   }
+   listen: function (emitter, context) {}
 }
 ```
 
@@ -412,7 +408,7 @@ module.exports = {
     filename: 'package.json',
     exists: true
   }
-}
+};
 ```
 
 ##### Phase Context
@@ -424,7 +420,7 @@ module.exports = {
 
 ###### `cmd(cmd || options, done(exitCode))` Run a shell command
 
-```
+```js
 {
   cmd: "shell string" || {command: "", args: [], screen: ""},
   env: {}, // any extra env variables
@@ -495,14 +491,14 @@ with the source code in any way. For that, write a `job` plugin.
 
 ```javascript
 module.exports = function (context, job, done) {
-}
+};
 ```
 
 #### Webapp
 
 ```javascript
 module.exports = function (context, done) {
-}
+};
 ```
 
 
@@ -520,7 +516,7 @@ the `listen` and `routes` functions of various plugin types.
 - app -- the express app
 - registerBlock
 
-#### registerBlock(name, cb)
+#### `registerBlock(name, cb)`
 
 ```javascript
 ctx.registerBlock('HeaderBrand', function(context, cb) {
