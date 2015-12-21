@@ -8,7 +8,7 @@
     "step": "~0.0.5",
     "async": "~0.2.6",
     "methods": "0.0.1",
-    "less": "~1.4.2",
+    "less": "^2.2.0",
     "underscore": "~1.5.2"
   },
   "devDependencies": {
