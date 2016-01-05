@@ -1,6 +1,6 @@
 {
   "name": "strider-extension-loader",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "description": "Load Strider extensions",
   "main": "main.js",
   "dependencies": {
