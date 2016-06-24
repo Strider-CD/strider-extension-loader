@@ -4,11 +4,11 @@
   "description": "Load Strider extensions",
   "main": "main.js",
   "dependencies": {
-    "connect": "~2.4.2",
-    "step": "~0.0.5",
     "async": "~0.2.6",
-    "methods": "0.0.1",
+    "connect": "^3.4.1",
     "less": "^2.2.0",
+    "methods": "0.0.1",
+    "step": "~0.0.5",
     "underscore": "~1.5.2"
   },
   "devDependencies": {
