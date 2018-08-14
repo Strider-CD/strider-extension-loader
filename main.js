@@ -1,5 +1,6 @@
+'use strict';
 //
 // Loader for Strider extension modules.
 //
 
-module.exports = require('./lib')
+module.exports = require('./lib');
