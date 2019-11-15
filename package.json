@@ -4,19 +4,20 @@
   "description": "Load Strider extensions",
   "main": "main.js",
   "dependencies": {
-    "async": "^3.1.0",
+    "async": "^2.6.1",
     "connect": "^3.6.6",
     "less": "^3.8.1",
     "methods": "^1.1.2",
+    "serve-static": "^1.14.1",
     "step": "^1.0.0"
   },
   "devDependencies": {
-    "chai": "^4.2.0",
+    "chai": "^3.5.0",
     "conventional-changelog-conventionalcommits": "^3.0.2",
-    "eslint": "^6.0.1",
+    "eslint": "^4.19.1",
     "lodash.map": "^4.6.0",
-    "mocha": "^6.1.4",
-    "standard-version": "^6.0.1"
+    "mocha": "^5.2.0",
+    "standard-version": "^7.0.0"
   },
   "scripts": {
     "lint": "eslint *.js lib",
