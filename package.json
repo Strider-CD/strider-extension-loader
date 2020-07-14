@@ -17,7 +17,7 @@
     "eslint": "^4.19.1",
     "lodash.map": "^4.6.0",
     "mocha": "^5.2.0",
-    "standard-version": "^7.0.0"
+    "standard-version": "^8.0.1"
   },
   "scripts": {
     "lint": "eslint *.js lib",
