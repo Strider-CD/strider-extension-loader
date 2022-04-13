@@ -4,7 +4,7 @@
   "description": "Load Strider extensions",
   "main": "main.js",
   "dependencies": {
-    "async": "^2.6.1",
+    "async": "^3.2.2",
     "connect": "^3.6.6",
     "less": "^3.8.1",
     "methods": "^1.1.2",
